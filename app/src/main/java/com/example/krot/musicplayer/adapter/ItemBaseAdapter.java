@@ -5,6 +5,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 import com.example.krot.musicplayer.model.Item;
+import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
+import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.viewholder.ItemBaseViewHolder;
 
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
  */
 
 public abstract class ItemBaseAdapter extends RecyclerView.Adapter<ItemBaseViewHolder> {
+
 
     @Nullable
     private List<Item> mCurrentItemList;
@@ -36,6 +39,7 @@ public abstract class ItemBaseAdapter extends RecyclerView.Adapter<ItemBaseViewH
     public void onBindViewHolder(ItemBaseViewHolder holder, int position) {
         holder.bindData(getItemAt(position));
     }
+
 
     public Item getItemAt(int position) {
         return (mCurrentItemList != null ? mCurrentItemList.get(position) : null);

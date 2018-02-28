@@ -13,9 +13,13 @@ public interface SongItemContract {
 
     interface SongItemView {
         void displaySongItemList(List<Item> itemList);
+        void showProgressBar();
+        void hideProgressBar();
     }
 
     interface SongItemPresenter {
         void loadData();
+        List<Item> getItemList();
+        SongItem getDefaultSong();
     }
 }

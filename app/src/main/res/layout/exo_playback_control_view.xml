@@ -1,0 +1,215 @@
+<android.support.constraint.ConstraintLayout android:id="@+id/playback_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_16"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.1" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_25"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.1" />
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_17"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.5" />
+
+
+
+    <ImageView
+        android:id="@+id/ic_shuffle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_shuffle_off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/guideline_16"
+        app:layout_constraintTop_toTopOf="@id/guideline_25"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_17"/>
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_18"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_19"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.35" />
+
+
+    <ImageView
+        android:id="@+id/ic_previous"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="@id/guideline_18"
+        app:layout_constraintEnd_toEndOf="@id/guideline_19"
+        app:layout_constraintTop_toTopOf="@id/guideline_25"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_17" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_20"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.45" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_21"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.55" />
+
+    <ImageView
+        android:id="@+id/ic_playback"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_play"
+        app:layout_constraintStart_toStartOf="@id/guideline_20"
+        app:layout_constraintEnd_toEndOf="@id/guideline_21"
+        app:layout_constraintTop_toTopOf="@id/guideline_25"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_17" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_22"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.65" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_23"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <ImageView
+        android:id="@+id/ic_next"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_next"
+        app:layout_constraintStart_toStartOf="@id/guideline_22"
+        app:layout_constraintEnd_toEndOf="@id/guideline_23"
+        app:layout_constraintTop_toTopOf="@id/guideline_25"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_17" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_24"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.9" />
+
+
+    <ImageView
+        android:id="@+id/ic_repeat"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_repeat_off"
+        app:layout_constraintStart_toStartOf="@id/guideline_24"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guideline_25"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_17"/>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_26"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.75" />
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_27"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.95" />
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_28"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.15" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_29"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.85" />
+
+    <TextView
+        android:id="@id/exo_position"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center|start"
+        android:text="00:05"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/guideline_28"
+        app:layout_constraintTop_toTopOf="@id/guideline_26"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_27"/>
+
+
+    <com.google.android.exoplayer2.ui.DefaultTimeBar
+        android:id="@id/exo_progress"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_gravity="center_vertical"
+        app:played_color="@color/orange"
+        app:layout_constraintStart_toStartOf="@id/guideline_28"
+        app:layout_constraintEnd_toEndOf="@id/guideline_29"
+        app:layout_constraintTop_toTopOf="@id/guideline_26"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_27" />
+
+
+    <TextView
+        android:id="@id/exo_duration"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center|end"
+        android:text="00:05"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:layout_marginStart="5dp"
+        app:layout_constraintStart_toStartOf="@id/guideline_29"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guideline_26"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_27"/>
+
+
+
+</android.support.constraint.ConstraintLayout>
+
+<!--<TextView android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:textSize="30sp"-->
+    <!--android:textColor="#ffffff"-->
+    <!--android:text="fwegfsdgsdfdsfdfdasdfasf"-->
+    <!--xmlns:android="http://schemas.android.com/apk/res/android" />-->

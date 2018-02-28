@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000" />
+
+    <android.support.design.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="?android:attr/actionBarSize">
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.04" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.09" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.05" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.95" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="@id/guideline_2"
+                app:layout_constraintEnd_toEndOf="@id/guideline_4"
+                app:layout_constraintStart_toStartOf="@id/guideline_3"
+                app:layout_constraintTop_toBottomOf="@id/guideline_1">
+
+                <ImageView
+                    android:id="@+id/icon_minimize"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.1"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_minimize_playback_song" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.1" />
+
+
+                <TextView
+                    android:id="@+id/textView"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.5"
+                    android:text="Now Playing"
+                    android:gravity="center_vertical"
+                    android:textColor="#ffffff"
+                    style="@android:style/TextAppearance.DeviceDefault.Medium" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.3" />
+
+                <ImageView
+                    android:id="@+id/icon_equalizer"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.1"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_equalizer" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.2" />
+
+
+                <ImageView
+                    android:id="@+id/icon_playback_option"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.1"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/ic_now_playing_option" />
+
+
+            </LinearLayout>
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.175" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.825" />
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.15" />
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.6" />
+
+
+            <ImageView
+                android:id="@+id/img_track_background"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toTopOf="@id/guideline_7"
+                app:layout_constraintBottom_toBottomOf="@id/guideline_8"
+                app:layout_constraintStart_toStartOf="@id/guideline_5"
+                app:layout_constraintEnd_toEndOf="@id/guideline_6"/>
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_9"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.65" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_10"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.71" />
+
+            <TextView
+                android:id="@+id/tv_track_name"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:text="Cannonballs"
+                android:ellipsize="end"
+                android:textColor="#ffffff"
+                android:gravity="center"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                app:layout_constraintTop_toTopOf="@id/guideline_9"
+                app:layout_constraintBottom_toBottomOf="@id/guideline_10"
+                app:layout_constraintStart_toStartOf="@id/guideline_5"
+                app:layout_constraintEnd_toEndOf="@id/guideline_6"/>
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_30"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.72" />
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_11"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.76" />
+
+
+            <TextView
+                android:id="@+id/tv_artist_name"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:text="Louder - Lea Michele"
+                android:ellipsize="end"
+                android:textColor="@color/orange"
+                android:gravity="center|bottom"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                app:layout_constraintTop_toTopOf="@id/guideline_30"
+                app:layout_constraintBottom_toBottomOf="@id/guideline_11"
+                app:layout_constraintStart_toStartOf="@id/guideline_5"
+                app:layout_constraintEnd_toEndOf="@id/guideline_6"/>
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.79" />
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_13"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.97" />
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_14"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.11" />
+
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline_15"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.89" />
+
+            <FrameLayout
+                android:id="@+id/playback_container"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintTop_toTopOf="@id/guideline_12"
+                app:layout_constraintBottom_toBottomOf="@id/guideline_13"
+                app:layout_constraintStart_toStartOf="@id/guideline_3"
+                app:layout_constraintEnd_toEndOf="@id/guideline_4">
+
+
+
+            </FrameLayout>
+
+
+
+        </android.support.constraint.ConstraintLayout>
+
+
+        <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_behavior="@string/bottom_sheet_behavior"
+            app:behavior_peekHeight="?android:attr/actionBarSize"
+            tools:context="com.example.krot.musicplayer.playlist.PlayListActivity">
+
+            <LinearLayout
+                android:id="@+id/bottom_sheet_playlist"
+                android:layout_width="match_parent"
+                android:layout_height="?android:attr/actionBarSize"
+                android:background="#37443E"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.2"
+                    android:src="@drawable/ic_show_play_list_fragment_dialog" />
+
+                <TextView
+                    android:id="@+id/tv_tab_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_weight="0.6"
+                    android:gravity="center"
+                    android:text="Playlist"
+                    android:textColor="#DEDEDE"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="0.2"
+                    android:src="@drawable/ic_show_play_list_fragment_dialog" />
+
+
+            </LinearLayout>
+
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/music_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#696C6B" />
+
+        </LinearLayout>
+
+    </android.support.design.widget.CoordinatorLayout>
+
+    <ProgressBar
+        android:id="@+id/retrieving_song_progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="50dp"/>
+
+
+</FrameLayout>

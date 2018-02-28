@@ -13,6 +13,9 @@ public class Song {
     private final String mSongId;
 
     @NonNull
+    private final String mAlbumId;
+
+    @NonNull
     private final String mSongUri;
 
     @NonNull
@@ -21,16 +24,26 @@ public class Song {
     @Nullable
     private final String mArtistName;
 
-    public Song(@NonNull String mSongId, @NonNull String mSongUri, @NonNull String mSongTitle, String mArtistName) {
+
+    private final long mDuration;
+
+    public Song(@NonNull String mSongId, @NonNull String mAlbumId , @NonNull String mSongUri, @NonNull String mSongTitle, @Nullable String mArtistName, long mDuration) {
         this.mSongId = mSongId;
+        this.mAlbumId = mAlbumId;
         this.mSongUri = mSongUri;
         this.mSongTitle = mSongTitle;
         this.mArtistName = mArtistName;
+        this.mDuration = mDuration;
     }
 
     @NonNull
     public String getSongId() {
         return mSongId;
+    }
+
+    @NonNull
+    public String getAlbumId() {
+        return mAlbumId;
     }
 
     @NonNull
@@ -46,5 +59,10 @@ public class Song {
     @Nullable
     public String getArtistName() {
         return mArtistName;
+    }
+
+
+    public long getDuration() {
+        return mDuration;
     }
 }

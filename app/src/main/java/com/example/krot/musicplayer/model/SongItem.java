@@ -1,6 +1,7 @@
 package com.example.krot.musicplayer.model;
 
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 /**
  * Created by Krot on 2/6/18.
@@ -9,7 +10,10 @@ import android.support.annotation.Nullable;
 public class SongItem implements Item {
 
     @Nullable
-    private final Song mSong;
+    private Song mSong;
+
+    public SongItem() {
+    }
 
     public SongItem(Song mSong) {
         this.mSong = mSong;
@@ -33,8 +37,10 @@ public class SongItem implements Item {
     @Override
     public boolean sameContent(Item currentItem) {
         SongItem mCurrentSongItem = (SongItem) currentItem;
-        return (    this.getSong().getSongUri().equals(mCurrentSongItem.getSong().getSongUri())
+        return (    this.getSong().getAlbumId().equals(mCurrentSongItem.getSong().getAlbumId())
+                &&  this.getSong().getSongUri().equals(mCurrentSongItem.getSong().getSongUri())
                 &&  this.getSong().getSongTitle().equals(mCurrentSongItem.getSong().getSongId())
-                &&  this.getSong().getArtistName().equals(mCurrentSongItem.getSong().getArtistName()));
+                &&  this.getSong().getArtistName().equals(mCurrentSongItem.getSong().getArtistName())
+                &&  this.getSong().getDuration() == mCurrentSongItem.getSong().getDuration());
     }
 }

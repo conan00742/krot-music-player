@@ -2,6 +2,10 @@ package com.example.krot.musicplayer.repository;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadata;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -37,6 +41,7 @@ public class SongItemRepository {
         return itemList;
     }
 
+
     public List<Item> retrieveSongListFromExternalStorage() {
         List<Item> itemList = new ArrayList<>();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -45,29 +50,60 @@ public class SongItemRepository {
         if (cursor != null) {
             if (cursor.moveToFirst()) {
                 do {
-                    String songId = UUID.randomUUID().toString();
+                    String songId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
                     String songUri = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                     String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
                     String artistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-//                    Log.i("WTF", "" + songId + " - " + songUri + " - " + songName + " - " + artistName);
+                    long duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                    String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 
-                    SongItem mCurrentSongItem = new SongItem(new Song(songId, songUri, songName, artistName));
+                    SongItem mCurrentSongItem = new SongItem(new Song(songId, albumId, songUri, songName, artistName, duration));
                     itemList.add(mCurrentSongItem);
+
                 } while (cursor.moveToNext());
             }
 
             cursor.close();
         }
 
-//        for (int i = 0; i < itemList.size(); i++) {
-//            Item mCurrentItem = itemList.get(i);
-//            if (mCurrentItem instanceof SongItem) {
-//                SongItem mCurrentSongItem = (SongItem) mCurrentItem;
-//                Log.i("WTF", "songName = " + mCurrentSongItem.getSong().getSongTitle());
-//            }
-//        }
+
         this.itemList = itemList;
         return itemList;
+    }
+
+
+
+    public static String convertDuration(long duration) {
+        String out = null;
+        long hours = 0;
+        try {
+            hours = (duration / 3600000);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return out;
+        }
+        long remaining_minutes = (duration - (hours * 3600000)) / 60000;
+        String minutes = String.valueOf(remaining_minutes);
+        if (minutes.equals(0)) {
+            minutes = "00";
+        }
+        long remaining_seconds = (duration - (hours * 3600000) - (remaining_minutes * 60000));
+        String seconds = String.valueOf(remaining_seconds);
+        if (seconds.length() < 2) {
+            seconds = "00";
+        } else {
+            seconds = seconds.substring(0, 2);
+        }
+
+        if (hours > 0) {
+            out = hours + ":" + minutes + ":" + seconds;
+        } else {
+            out = minutes + ":" + seconds;
+        }
+
+        return out;
+
     }
 
 

@@ -1,18 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/song_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginBottom="16dp"
-    android:layout_marginTop="10dp"
-    android:orientation="vertical">
+    android:layout_height="75dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:background="#000000">
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.03"/>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.57"/>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.74"/>
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.85"/>
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.905"/>
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_vertical_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.97"/>
+
+
+
+
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_horizontal_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.4"/>
+
+
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_horizontal_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.6"/>
+
+
 
     <TextView
         android:id="@+id/tv_song_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:text="gdadasdasdcadadfadsfsddafadfadfdafafdfadfasfasfasfasd"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textColor="#F8F8F8"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical_1"
+        app:layout_constraintEnd_toEndOf="@id/guideline_vertical_3"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_horizontal_1"/>
+
+
+    <TextView
+        android:id="@+id/tv_duration"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="3:30"
+        android:textColor="#F8F8F8"
+        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical_4"
+        app:layout_constraintEnd_toEndOf="@id/guideline_vertical_5"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_horizontal_1" />
+
+    <TextView
+        android:id="@+id/tv_artist"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textAppearance="?android:textAppearanceSmall"
+        android:text="Nighwish"
+        android:textColor="@color/grey"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical_1"
+        app:layout_constraintEnd_toEndOf="@id/guideline_vertical_3"
+        app:layout_constraintTop_toTopOf="@id/guideline_horizontal_2"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+
+    <ImageView
+        android:id="@+id/ic_option"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_more_options"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical_6"
+        app:layout_constraintEnd_toEndOf="@id/guideline_vertical_2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_horizontal_1" />
+
+
+    <ImageView
+        android:id="@+id/ic_playing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:text="Far away"/>
+        android:visibility="gone"
+        android:background="@drawable/ic_playing"
+        app:layout_constraintStart_toStartOf="@id/guideline_vertical_4"
+        app:layout_constraintEnd_toEndOf="@id/guideline_vertical_5"
+        app:layout_constraintTop_toTopOf="@id/guideline_horizontal_2"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>
