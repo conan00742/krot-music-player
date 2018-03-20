@@ -9,9 +9,26 @@ import io.reactivex.subjects.Subject;
  */
 
 public class RxBus {
-    public final Subject<Object> _bus = PublishSubject.create().toSerialized();
+    private static RxBus bus;
+    private final Subject<Object> mSubjectBus;
 
-    public void send(Object o) { _bus.onNext(o);}
+    private RxBus() {
+        mSubjectBus = PublishSubject.create().toSerialized();
+    }
 
-    public Observable<Object> toObserverable() {return _bus;}
+    public static RxBus getInstance() {
+        if (bus == null) {
+            bus = new RxBus();
+        }
+
+        return bus;
+    }
+
+    public void send(Object o) {
+        mSubjectBus.onNext(o);
+    }
+
+    public Observable<Object> toObserverable() {
+        return mSubjectBus;
+    }
 }

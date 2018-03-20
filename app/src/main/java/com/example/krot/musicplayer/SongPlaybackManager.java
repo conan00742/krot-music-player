@@ -1,29 +1,32 @@
 package com.example.krot.musicplayer;
 
+import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.net.Uri;
-import android.provider.MediaStore;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
+import com.example.krot.musicplayer.event_bus.EventEndSong;
+import com.example.krot.musicplayer.event_bus.EventIsPaused;
+import com.example.krot.musicplayer.event_bus.EventIsPlaying;
+import com.example.krot.musicplayer.event_bus.EventRepeatOff;
+import com.example.krot.musicplayer.event_bus.EventRepeatOn;
+import com.example.krot.musicplayer.event_bus.EventShuffleOff;
+import com.example.krot.musicplayer.event_bus.EventShuffleOn;
+import com.example.krot.musicplayer.event_bus.EventUpdatePlayerUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
+import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
+import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -38,7 +41,6 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
@@ -48,194 +50,209 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PAUSED;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PLAYING;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_UI;
+import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYBACK_POSITION;
+import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYING_SONG;
+import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYLIST_TAG;
+import static com.example.krot.musicplayer.AppConstantTag.CURRENT_REPEAT_MODE_TAG;
+import static com.example.krot.musicplayer.AppConstantTag.CURRENT_SHUFFLE_MODE_TAG;
+import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
+import static com.example.krot.musicplayer.AppConstantTag.LAST_PLAYED_SONG_INDEX_TAG;
+import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
 
 /**
  * Created by Krot on 2/9/18.
  */
 
-public class SongPlaybackManager extends Player.DefaultEventListener implements Player.EventListener, AudioManager.OnAudioFocusChangeListener, ImageView.OnClickListener {
+//TODO: SongPlaybackManager extends Service
+public class SongPlaybackManager implements Player.EventListener, AudioManager.OnAudioFocusChangeListener {
 
-    private static final String LAST_PLAYED_SONG_INDEX_TAG = "LASTPLAYEDSONGINDEX";
-    private static final String CURRENT_PLAYING_SONG = "CURRENT_PLAYING_SONG";
-    private static final String CURRENT_PLAYLIST_TAG = "CURRENT_PLAYLIST_TAG";
-    private static final String CURRENT_SHUFFLE_MODE_TAG = "CURRENT_SHUFFLE_MODE_TAG";
-    private static final String CURRENT_REPEAT_MODE_TAG = "CURRENT_REPEAT_MODE_TAG";
-    private static final String CURRENT_PLAYBACK_POSITION = "CURRENT_PLAYBACK_POSITION";
-
+    private static SongPlaybackManager manager;
+    private SimpleExoPlayer player;
     private Context context;
     private RxBus bus;
-    private ImageView icPlayback;
-    private ImageView icShuffle;
-    private ImageView icRepeat;
-    private ImageView icNext;
-    private ImageView icPrevious;
 
-    //PlayListActivity Views
-    private TextView songName;
-    private TextView artistName;
-    private ImageView songBackground;
 
 
     //current playlist
     @Nullable
     private List<SongItem> currentList;
 
-    @Nullable
-    private List<SongItem> backUpList = new ArrayList<>();
-
+    //original playlist from storage
     @Nullable
     private List<SongItem> originalList = new ArrayList<>();
 
-
     private int lastPlayedSongIndex = 0;
-    private int count = 0;
+
     @NonNull
-    private final DataSource.Factory dataSourceFactory;
-    @NonNull
-    public final SimpleExoPlayer player;
-    @Nullable
-    private SimpleExoPlayerView exoPlayerView;
-    private AudioManager audioManager;
-    private AudioFocusRequest mFocusRequest;
-    private FrameLayout container;
-    private HashMap<List<Item>, Integer> lastPlayedSongMap;
+    private DataSource.Factory dataSourceFactory;
     private SharedPreferences lastPlayedSongPreferences;
-    private boolean isPlayingShuffleAll = false;
     private boolean isShuffle = false;
     private boolean isRepeat = false;
     private long currentPlaybackPosition = 0;
 
+    /**DEFAUTL CONSTRUCTOR to initialize SimpleExoPlayer**/
+    private SongPlaybackManager() {
+        //constructor
 
-    public SongPlaybackManager(Context context, RxBus bus,
-                               FrameLayout playbackContainer,
-                               TextView songName,
-                               TextView artistName,
-                               ImageView songBackground,
-                               @Nullable List<Item> defaultList,
-                               int inAppCount) {
+        //init bus
+        bus = RxBus.getInstance();
 
-        this.context = context;
-        this.bus = bus;
-        container = playbackContainer;
-        this.songName = songName;
-        this.artistName = artistName;
-        this.songBackground = songBackground;
-        this.count = inAppCount;
+        //init context
+        context = MusicPlayerApp.getAppContext();
+
+        //init player//constructor
         this.lastPlayedSongPreferences = this.context.getSharedPreferences(this.context.getPackageName(), Context.MODE_PRIVATE);
 
         Gson gson = new Gson();
+
+        //last played playlist
         String data = lastPlayedSongPreferences.getString(CURRENT_PLAYLIST_TAG, "[]");
 
+        //original playlist from STORAGE
+        String defaultListInString = lastPlayedSongPreferences.getString(ORIGINAL_PLAYLIST, "[]");
+        List<SongItem> defaultList = gson.fromJson(defaultListInString, new TypeToken<List<SongItem>>() {
+        }.getType());
 
-        if (count == 0) {
-            currentList = getPlayList(defaultList);
+        //flag to check if user first install this app or not
+        boolean isFirstTimeInstall = lastPlayedSongPreferences.getBoolean(FIRST_TIME_INSTALL, true);
+
+        //check if first time install this app
+        if (isFirstTimeInstall) {
+            currentList = defaultList;
         } else {
             currentList = gson.fromJson(data, new TypeToken<List<SongItem>>() {
             }.getType());
             if (currentList == null || currentList.isEmpty()) {
-                currentList = getPlayList(defaultList);
+                currentList = defaultList;
             }
         }
 
-        backUpList = currentList;
+        //setOriginalList for later use
+        setOriginalList(defaultList);
+
+        //set the current displayed list
+        saveCurrentPlayList(currentList);
+
+        //Retrieve data from sharedpreferences
         lastPlayedSongIndex = lastPlayedSongPreferences.getInt(LAST_PLAYED_SONG_INDEX_TAG, 0);
         isShuffle = lastPlayedSongPreferences.getBoolean(CURRENT_SHUFFLE_MODE_TAG, false);
         isRepeat = lastPlayedSongPreferences.getBoolean(CURRENT_REPEAT_MODE_TAG, false);
         currentPlaybackPosition = lastPlayedSongPreferences.getLong(CURRENT_PLAYBACK_POSITION, 0);
 
+        //create SimpleExoPlayer
+        player = createPlayer(this.context);
 
-        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-        dataSourceFactory = new DefaultDataSourceFactory(
-                context,
-                Util.getUserAgent(context, context.getResources().getString(R.string.app_name)));
-        player = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
-
-
-
-
-        //init exoplayerview
-        exoPlayerView = (SimpleExoPlayerView) LayoutInflater.from(this.context).inflate(R.layout.music_player_view, null, false);
-        container.addView(exoPlayerView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        exoPlayerView.setUseController(true);
-        exoPlayerView.setControllerShowTimeoutMs(0);
-        exoPlayerView.setControllerHideOnTouch(false);
-        exoPlayerView.setUseArtwork(false);
-
-        //findChildViewByIds
-        findChildViewById();
-        exoPlayerView.setPlayer(player);
+        //prepareSource for player (lastPlayedSong)
         prepareSource(lastPlayedSongIndex);
 
-        player.addListener(this);
-        player.setShuffleModeEnabled(isShuffle);
-        if (isRepeat) {
-            player.setRepeatMode(Player.REPEAT_MODE_ONE);
+        //set shuffle icon
+        if (isShuffle) {
+            bus.send(new EventShuffleOn());
         } else {
-            player.setRepeatMode(Player.REPEAT_MODE_OFF);
+            bus.send(new EventShuffleOff());
         }
-        audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build();
 
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            mFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(audioAttributes)
-                    .setAcceptsDelayedFocusGain(true)
-                    .setWillPauseWhenDucked(true)
-                    .setOnAudioFocusChangeListener(this)
-                    .build();
-
+        //set repeat icon
+        if (isRepeat) {
+            bus.send(new EventRepeatOn());
+        } else {
+            bus.send(new EventRepeatOff());
         }
+
+        //add listener to SimpleExoPlayer
+        player.addListener(this);
+    }
+
+
+    /**SINGLETON getInstance()**/
+    public static SongPlaybackManager getSongPlaybackManagerInstance() {
+        if (manager == null) {
+            manager = new SongPlaybackManager();
+        }
+
+        return manager;
     }
 
 
     public void setCurrentList(@Nullable List<Item> currentList) {
-        Log.i("WTF", "currentList: size = " + this.currentList.size());
-        this.currentList.clear();
+        List<SongItem> convertedList = new ArrayList<>();
         for (int i = 0; i < currentList.size(); i++) {
-            this.currentList.add((SongItem) currentList.get(i));
+            Item currentItem = currentList.get(i);
+            if (currentItem instanceof ShuffleAllSongsItem) {
+                continue;
+            }
+            SongItem currentSongItem = (SongItem) currentList.get(i);
+            convertedList.add(currentSongItem);
         }
 
+        this.currentList.clear();
+        this.currentList.addAll(convertedList);
+        saveCurrentPlayList(this.currentList);
     }
 
-    public void setOriginalList(@Nullable List<Item> originalList) {
-        for (int i = 0; i < originalList.size(); i++) {
-            this.originalList.add((SongItem) originalList.get(i));
-        }
+
+    public void setOriginalList(@Nullable List<SongItem> originalList) {
+        this.originalList = originalList;
     }
 
     public void setLastPlayedSongIndex(int lastPlayedSongIndex) {
         this.lastPlayedSongIndex = lastPlayedSongIndex;
     }
 
-    public void setPlayingShuffleAll(boolean playingShuffleAll) {
-        isPlayingShuffleAll = playingShuffleAll;
+    public SimpleExoPlayer createPlayer(Context context) {
+        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
+        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+        dataSourceFactory = new DefaultDataSourceFactory(
+                context,
+                Util.getUserAgent(context, context.getResources().getString(R.string.app_name)));
+        SimpleExoPlayer simpleExoPlayer = ExoPlayerFactory.newSimpleInstance(context, trackSelector);
+
+        return simpleExoPlayer;
     }
 
 
     public void prepareSource(int lastPlayedSongIndex) {
         this.lastPlayedSongIndex = lastPlayedSongIndex;
         SongItem currentSongItem = currentList.get(this.lastPlayedSongIndex);
+        bus.send(new EventUpdatePlayerUI(currentSongItem, (int)currentPlaybackPosition));
+
+        //put Parcelable extra and sendBroadcast
+        Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
+//        notificationUpdateUIIntent.putExtra(CURRENT_PLAYING_SONG, currentSongItem);
+        context.sendBroadcast(notificationUpdateUIIntent);
+
         MediaSource currentMediaSource = new ExtractorMediaSource.Factory(dataSourceFactory)
                 .createMediaSource(Uri.parse(currentSongItem.getSong().getSongUri()));
-        player.prepare(currentMediaSource, true, false);
-        player.seekTo(currentPlaybackPosition);
-        updatePlayerView(currentSongItem);
+        player.prepare(currentMediaSource, true, false); //TODO: test true true
+
+//        if (currentPlaybackPosition > 0) {
+//            player.seekTo(currentPlaybackPosition);
+//        } else {
+//            player.seekToDefaultPosition();
+//        }
+
+
     }
 
-
+    /**
+     * PLAY
+     **/
     public void play() {
         player.setPlayWhenReady(true);
     }
 
+    /**
+     * PAUSE
+     **/
     public void pause() {
         player.setPlayWhenReady(false);
     }
@@ -266,15 +283,16 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
                 break;
             case Player.STATE_READY:
                 if (playWhenReady) {
-                    icPlayback.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_pause));
+                    bus.send(new EventIsPlaying());
+                    context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PLAYING));
                 } else {
-                    icPlayback.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_play));
+                    bus.send(new EventIsPaused());
+                    context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PAUSED));
                 }
                 break;
             case Player.STATE_ENDED:
-                //if repeat mode OFF -> auto play next song
-                //else repeat the current song
-                if (!isRepeat){
+                bus.send(new EventEndSong());
+                if (!isRepeatOn()) {
                     next();
                 }
                 break;
@@ -286,11 +304,11 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
         switch (repeatMode) {
             case Player.REPEAT_MODE_OFF:
                 isRepeat = false;
-                icRepeat.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_repeat_off));
+                bus.send(new EventRepeatOff());
                 break;
             case Player.REPEAT_MODE_ONE:
                 isRepeat = true;
-                icRepeat.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_repeat_on));
+                bus.send(new EventRepeatOn());
                 break;
         }
     }
@@ -299,16 +317,36 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
     public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
         if (shuffleModeEnabled) {
             isShuffle = true;
-            icShuffle.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_shuffle_on));
+            //bắn bus ra đổi icon shuffle_on
+            bus.send(new EventShuffleOn());
+            //shuffle play list
+
+            //lấy bài đầu tiên bỏ vô list mới
+            //mấy bài sau random
+            List<SongItem> shuffledList = new ArrayList<>();
+            SongItem currentPlayingSong = currentList.get(lastPlayedSongIndex);
+            shuffledList.add(currentPlayingSong);
+
+            //random đống còn lại bỏ bài đang play
+            currentList.remove(currentPlayingSong);
+            //do random
+            List<SongItem> newList = randomPlayList(currentList);
+            shuffledList.addAll(newList);
+
+            //set vô currentList
+            currentList.clear();
+            currentList.addAll(shuffledList);
+            saveCurrentPlayList(currentList);
+            lastPlayedSongIndex = 0;
         } else {
             isShuffle = false;
-            if (isPlayingShuffleAll) {
-                SongItem currentTrack = currentList.get(lastPlayedSongIndex);
-                currentList.clear();
-                currentList.addAll(originalList);
-                lastPlayedSongIndex = currentList.indexOf(currentTrack);
-            }
-            icShuffle.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_shuffle_off));
+            SongItem currentTrack = currentList.get(lastPlayedSongIndex);
+            currentList.clear();
+            currentList.addAll(originalList);
+            saveCurrentPlayList(currentList);
+            lastPlayedSongIndex = currentList.indexOf(currentTrack);
+            bus.send(new EventShuffleOff());
+            //bắn bus ra đổi icon shuffle_off
         }
     }
 
@@ -331,145 +369,93 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
 
     @Override
     public void onAudioFocusChange(int focusChange) {
+
     }
 
-    //TODO: tự handle shuffle, khi play sẽ tạo ra source
 
-
-    public void findChildViewById() {
-        icPlayback = exoPlayerView.findViewById(R.id.ic_playback);
-        icPlayback.setOnClickListener(this);
-
-        icNext = exoPlayerView.findViewById(R.id.ic_next);
-        icNext.setOnClickListener(this);
-
-        icPrevious = exoPlayerView.findViewById(R.id.ic_previous);
-        icPrevious.setOnClickListener(this);
-
-        icShuffle = exoPlayerView.findViewById(R.id.ic_shuffle);
-        icShuffle.setOnClickListener(this);
-
-        icRepeat = exoPlayerView.findViewById(R.id.ic_repeat);
-        icRepeat.setOnClickListener(this);
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.ic_playback:
-                if (player.getPlaybackState() == Player.STATE_READY && player.getPlayWhenReady()) {
-                    pause();
-                } else {
-                    play();
-                }
-                break;
-            case R.id.ic_next:
-                next();
-                break;
-            case R.id.ic_previous:
-                previous();
-                break;
-            case R.id.ic_shuffle:
-                if (player.getShuffleModeEnabled()) {
-                    isShuffle = false;
-                    player.setShuffleModeEnabled(false);
-                } else {
-                    isShuffle = true;
-                    player.setShuffleModeEnabled(true);
-                }
-                break;
-            case R.id.ic_repeat:
-                if (player.getRepeatMode() == Player.REPEAT_MODE_OFF) {
-                    isRepeat = true;
-                    player.setRepeatMode(Player.REPEAT_MODE_ONE);
-                } else if (player.getRepeatMode() == Player.REPEAT_MODE_ONE) {
-                    isRepeat = false;
-                    player.setRepeatMode(Player.REPEAT_MODE_OFF);
-                }
-                break;
+    public boolean isPlaying() {
+        if (player.getPlaybackState() == Player.STATE_READY && player.getPlayWhenReady()) {
+            return true;
+        } else {
+            return false;
         }
     }
 
-
-    public void next() {
+    /**
+     * SHUFFLE FEATURE
+     **/
+    public boolean isShuffleOn() {
         if (player.getShuffleModeEnabled()) {
-            //random
-            Random shuffleIndex = new Random();
-            this.lastPlayedSongIndex = shuffleIndex.nextInt(currentList.size());
+            return true;
+        } else {
+            return false;
         }
+    }
 
+    public void setPlayerShuffleOn() {
+        player.setShuffleModeEnabled(true);
+        isShuffle = true;
+    }
 
-        else if (!player.getShuffleModeEnabled() || isPlayingShuffleAll){
-            if (this.lastPlayedSongIndex < currentList.size() - 1) {
-                this.lastPlayedSongIndex += 1;
-            } else {
-                this.lastPlayedSongIndex = 0;
-            }
+    public void setPlayerShuffleOff() {
+        player.setShuffleModeEnabled(false);
+        isShuffle = false;
+    }
+
+    /**
+     * REPEAT FEATURE
+     **/
+    public boolean isRepeatOn() {
+        if (player.getRepeatMode() == Player.REPEAT_MODE_ONE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void setRepeatOn() {
+        player.setRepeatMode(Player.REPEAT_MODE_ONE);
+        isRepeat = true;
+    }
+
+    public void setRepeatOff() {
+        player.setRepeatMode(Player.REPEAT_MODE_OFF);
+        isRepeat = false;
+    }
+
+    /**
+     * PLAY NEXT SONG FEATURE
+     **/
+    public void next() {
+        if (this.lastPlayedSongIndex < currentList.size() - 1) {
+            this.lastPlayedSongIndex += 1;
+        } else {
+            this.lastPlayedSongIndex = 0;
         }
 
         prepareSource(this.lastPlayedSongIndex);
-        play();
+
     }
 
-
+    /**
+     * PLAY PREVIOUS SONG FEATURE
+     **/
     public void previous() {
-        if (player.getShuffleModeEnabled()) {
-            //random
-            Random shuffleIndex = new Random();
-            this.lastPlayedSongIndex = shuffleIndex.nextInt(currentList.size());
+        if (this.lastPlayedSongIndex == 0) {
+            player.seekTo(0, 0);
+        } else if (this.lastPlayedSongIndex > 0) {
+            this.lastPlayedSongIndex -= 1;
             prepareSource(this.lastPlayedSongIndex);
-            play();
-        }
-
-        else if (!player.getShuffleModeEnabled() || isPlayingShuffleAll){
-            if (this.lastPlayedSongIndex == 0) {
-                player.seekTo(0, 0);
-                play();
-            } else if (this.lastPlayedSongIndex > 0) {
-                this.lastPlayedSongIndex -= 1;
-                prepareSource(this.lastPlayedSongIndex);
-                play();
-            }
         }
 
     }
 
-
-    public void updatePlayerView(SongItem currentSongItem) {
-        if (currentSongItem.getSong() != null) {
-            String songCover = null;
-            Cursor coverCursor = context.getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                    new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-                    MediaStore.Audio.Albums._ID + " = ?",
-                    new String[]{String.valueOf(currentSongItem.getSong().getAlbumId())},
-                    null);
-            if (coverCursor.moveToFirst()) {
-                songCover = coverCursor.getString(coverCursor.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-            }
-
-            if (songCover != null) {
-                Glide.with(context).load(songCover).apply(new RequestOptions().centerCrop()).into(songBackground);
-            } else {
-                Glide.with(context).load(R.drawable.default_song_image).apply(new RequestOptions().centerCrop()).into(songBackground);
-            }
-
-            songName.setText(currentSongItem.getSong().getSongTitle());
-            artistName.setText(currentSongItem.getSong().getArtistName());
-        } else {
-            songName.setText("???");
-            artistName.setText("???");
-            Glide.with(context).load(R.drawable.default_song_image).apply(new RequestOptions().centerCrop()).into(songBackground);
-        }
-    }
-
-
+    /**SAVE LAST PLAYED SONG**/
     public void saveLastPlayedSong() {
-        Gson gson = new Gson();
+        Log.i("WTF", "saveLastPlayedSong");
+        saveCurrentPlayList(currentList);
 
         SharedPreferences.Editor editor = lastPlayedSongPreferences.edit();
-        //current play list
-        String currentPlayListInString = gson.toJson(currentList);
-        editor.putString(CURRENT_PLAYLIST_TAG, currentPlayListInString);
 
         //current song index
         editor.putInt(LAST_PLAYED_SONG_INDEX_TAG, this.lastPlayedSongIndex);
@@ -483,8 +469,12 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
         //current song playback position
         editor.putLong(CURRENT_PLAYBACK_POSITION, player.getCurrentPosition());
 
+        Log.i("WTF", "SAVELASTPLAYEDSONG: lastPlayedSongIndex = " + lastPlayedSongIndex + " - isShuffle = " + isShuffle + " - isRepeat = " + isRepeat + " - currentPlaybackPosition = " + player.getContentPosition() + " - " + player.getCurrentPosition() + " - " + player.getBufferedPosition());
+
+
         editor.apply();
     }
+
 
     private List<SongItem> getPlayList(List<Item> itemList) {
         List<SongItem> songItemList = new ArrayList<>();
@@ -495,7 +485,52 @@ public class SongPlaybackManager extends Player.DefaultEventListener implements 
     }
 
 
+    public void saveCurrentPlayList(List<SongItem> currentPlayList) {
+        Log.i("WTF", "saveCurrentPlayList");
+        Gson gson = new Gson();
+        SharedPreferences.Editor editor = lastPlayedSongPreferences.edit();
+        String data = gson.toJson(currentPlayList);
+        editor.putString(CURRENT_PLAYLIST_TAG, data);
+        editor.apply();
+    }
 
+
+    private List<SongItem> randomPlayList(List<SongItem> currentList) {
+        List<SongItem> newList = new ArrayList<>();
+        int index;
+        SongItem tempSongItem;
+        Random random = new Random();
+        for (int i = currentList.size() - 1; i > 0; i--) {
+            index = random.nextInt(i + 1);
+            tempSongItem = currentList.get(index);
+            newList.add(tempSongItem);
+        }
+
+        return newList;
+    }
+
+
+    public int getState() {
+        return player.getPlaybackState();
+    }
+
+
+    public boolean getReady() {
+        return player.getPlayWhenReady();
+    }
+
+
+    public void seek(int position) {
+        player.seekTo(position);
+    }
+
+    public int getCurrentPlaybackPosition() {
+        return (int)player.getCurrentPosition();
+    }
+
+    public SongItem getCurrentPlaybackSong() {
+        return (currentList != null ? currentList.get(this.lastPlayedSongIndex) : null);
+    }
 
 }
 

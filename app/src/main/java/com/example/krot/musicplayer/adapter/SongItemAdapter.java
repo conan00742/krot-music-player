@@ -25,21 +25,18 @@ public class SongItemAdapter extends ItemBaseAdapter {
     @NonNull
     private Context mContext;
 
-    @NonNull
-    private RxBus bus;
 
-    public SongItemAdapter(@NonNull Context mContext, @NonNull RxBus bus) {
+    public SongItemAdapter(@NonNull Context mContext) {
         this.mContext = mContext;
-        this.bus = bus;
     }
 
     @Override
     public ItemBaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch (viewType) {
             case SHUFFLE_ALL_SONGS_ITEM:
-                return new ShuffleAllSongsViewHolder(parent, R.layout.shuffle_all_songs_item, mContext, bus);
+                return new ShuffleAllSongsViewHolder(parent, R.layout.shuffle_all_songs_item, mContext);
             default:
-                return new SongItemViewHolder(parent, R.layout.song_item, mContext, bus);
+                return new SongItemViewHolder(parent, R.layout.song_item, mContext);
         }
     }
 

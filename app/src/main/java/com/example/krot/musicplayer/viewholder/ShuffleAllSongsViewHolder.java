@@ -30,14 +30,11 @@ public class ShuffleAllSongsViewHolder extends ItemBaseViewHolder<ShuffleAllSong
 
     @NonNull
     private Context context;
-    @NonNull
-    private RxBus bus;
 
 
-    public ShuffleAllSongsViewHolder(ViewGroup parent, int resourceId, @NonNull Context context, @NonNull RxBus bus) {
+    public ShuffleAllSongsViewHolder(ViewGroup parent, int resourceId, @NonNull Context context) {
         super(parent, resourceId);
         this.context = context;
-        this.bus = bus;
         ButterKnife.bind(this, itemView);
     }
 
@@ -53,6 +50,6 @@ public class ShuffleAllSongsViewHolder extends ItemBaseViewHolder<ShuffleAllSong
     @OnClick(R.id.shuffle_all_container)
     public void doShuffleAllSongs() {
         //bus
-        bus.send(new EventShuffleAllSongs());
+        RxBus.getInstance().send(new EventShuffleAllSongs());
     }
 }

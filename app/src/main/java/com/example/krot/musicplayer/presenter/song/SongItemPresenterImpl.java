@@ -2,15 +2,19 @@ package com.example.krot.musicplayer.presenter.song;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.example.krot.musicplayer.SongPlaybackManager;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.example.krot.musicplayer.repository.SongItemRepository;
+import com.google.gson.Gson;
 
 import java.util.List;
 
@@ -30,6 +34,9 @@ public class SongItemPresenterImpl implements SongItemContract.SongItemPresenter
 
     @NonNull
     private SongItemRepository songItemRepository;
+
+    @NonNull
+    private SharedPreferences originalPlaylistPreferences;
 
 
     public SongItemPresenterImpl(@NonNull PlayListActivity activity) {
@@ -59,11 +66,11 @@ public class SongItemPresenterImpl implements SongItemContract.SongItemPresenter
 
             @Override
             protected void onPostExecute(List<Item> items) {
+                Log.i("WTF", "onPostExecute");
                 songItemView.hideProgressBar();
                 songItemView.displaySongItemList(items);
             }
         }.execute();
-        songItemView.displaySongItemList(songItemRepository.retrieveSongListFromExternalStorage());
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.example.krot.musicplayer.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -7,7 +9,7 @@ import android.support.annotation.Nullable;
  * Created by Krot on 2/6/18.
  */
 
-public class Song {
+public class Song implements Parcelable{
 
     @NonNull
     private final String mSongId;
@@ -35,6 +37,27 @@ public class Song {
         this.mArtistName = mArtistName;
         this.mDuration = mDuration;
     }
+
+    protected Song(Parcel in) {
+        mSongId = in.readString();
+        mAlbumId = in.readString();
+        mSongUri = in.readString();
+        mSongTitle = in.readString();
+        mArtistName = in.readString();
+        mDuration = in.readLong();
+    }
+
+    public static final Creator<Song> CREATOR = new Creator<Song>() {
+        @Override
+        public Song createFromParcel(Parcel in) {
+            return new Song(in);
+        }
+
+        @Override
+        public Song[] newArray(int size) {
+            return new Song[size];
+        }
+    };
 
     @NonNull
     public String getSongId() {
@@ -64,5 +87,20 @@ public class Song {
 
     public long getDuration() {
         return mDuration;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.mSongId);
+        dest.writeString(this.mAlbumId);
+        dest.writeString(this.mSongUri);
+        dest.writeString(this.mSongTitle);
+        dest.writeString(this.mArtistName);
+        dest.writeLong(this.mDuration);
     }
 }

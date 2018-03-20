@@ -7,6 +7,7 @@ package com.example.krot.musicplayer.model;
 public class ShuffleAllSongsItem implements Item {
 
     public ShuffleAllSongsItem() {
+
     }
 
     @Override
