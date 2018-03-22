@@ -205,8 +205,25 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_playback_song);
         ButterKnife.bind(this);
+        lastSongPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        behavior = BottomSheetBehavior.from(bottomSheetPlayList);
+        songItemPresenter = new SongItemPresenterImpl(this);
+        setupAdapter();
+
+        //request permission
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        if (!hasPermissions(this, permissions)) {
+            ActivityCompat.requestPermissions(this, permissions, PERMISSION_CODE);
+        } else {
+            songItemPresenter.loadData();
+        }
 
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         disposable = RxBus.getInstance().toObserverable().subscribe(new Consumer<Object>() {
             @Override
             public void accept(Object o) throws Exception {
@@ -306,29 +323,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
             }
         });
-
-
-
-
-        lastSongPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
-        behavior = BottomSheetBehavior.from(bottomSheetPlayList);
-        songItemPresenter = new SongItemPresenterImpl(this);
-        setupAdapter();
-
-        //request permission
-        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        if (!hasPermissions(this, permissions)) {
-            ActivityCompat.requestPermissions(this, permissions, PERMISSION_CODE);
-        } else {
-            songItemPresenter.loadData();
-        }
-
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
     }
 
     private List<Item> randomShuffle(List<Item> currentPlayList) {
@@ -364,6 +358,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         SharedPreferences.Editor countEditor = lastSongPreferences.edit();
         countEditor.putBoolean(FIRST_TIME_INSTALL, false);
         countEditor.apply();
+        sendBroadcast(new Intent(ACTION_SAVE_CURRENT_PLAYLIST));
+        disposable.dispose();
     }
 
     @Override
@@ -375,8 +371,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        sendBroadcast(new Intent(ACTION_SAVE_CURRENT_PLAYLIST));
-        disposable.dispose();
         stopService(new Intent(PlayListActivity.this, SongPlaybackService.class));
     }
 
@@ -450,6 +444,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                         }
                     }
                 }
+
                 break;
         }
     }
