@@ -15,9 +15,12 @@ public class EventUpdatePlayerUI {
 
     private int currentPlaybackPosition;
 
-    public EventUpdatePlayerUI(SongItem currentSongItem, int currentPlaybackPosition) {
+    private int currentSongIndex;
+
+    public EventUpdatePlayerUI(SongItem currentSongItem, int currentPlaybackPosition, int currentSongIndex) {
         this.currentSongItem = currentSongItem;
         this.currentPlaybackPosition = currentPlaybackPosition;
+        this.currentSongIndex = currentSongIndex;
     }
 
     @Nullable
@@ -27,5 +30,9 @@ public class EventUpdatePlayerUI {
 
     public int getCurrentPlaybackPosition() {
         return currentPlaybackPosition;
+    }
+
+    public int getCurrentSongIndex() {
+        return currentSongIndex;
     }
 }

@@ -5,4 +5,5 @@
     <color name="colorAccent">#FF4081</color>
     <color name="orange">#FF8400</color>
     <color name="grey">#D6D2D1</color>
+    <color name="default_song_text_color">#F8F8F8</color>
 </resources>

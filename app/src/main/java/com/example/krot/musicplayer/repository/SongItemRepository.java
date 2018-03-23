@@ -57,7 +57,7 @@ public class SongItemRepository {
                     long duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
                     String albumId = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 
-                    SongItem mCurrentSongItem = new SongItem(new Song(songId, albumId, songUri, songName, artistName, duration));
+                    SongItem mCurrentSongItem = new SongItem(new Song(songId, albumId, songUri, songName, artistName, duration), false);
                     itemList.add(mCurrentSongItem);
 
                 } while (cursor.moveToNext());

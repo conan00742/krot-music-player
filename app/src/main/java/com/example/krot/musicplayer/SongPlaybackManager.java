@@ -78,8 +78,7 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
     private SimpleExoPlayer player;
     private Context context;
     private RxBus bus;
-
-
+    private boolean firstTimeInstantiate = false;
 
     //current playlist
     @Nullable
@@ -100,8 +99,7 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
 
     /**DEFAUTL CONSTRUCTOR to initialize SimpleExoPlayer**/
     private SongPlaybackManager() {
-        //constructor
-
+        firstTimeInstantiate = true;
         //init bus
         bus = RxBus.getInstance();
 
@@ -147,6 +145,8 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         isRepeat = lastPlayedSongPreferences.getBoolean(CURRENT_REPEAT_MODE_TAG, false);
         currentPlaybackPosition = lastPlayedSongPreferences.getLong(CURRENT_PLAYBACK_POSITION, 0);
 
+        Log.i("WTF", "INITIALIZATION PLAYER: lastPlayedSongIndex = " + lastPlayedSongIndex + " - currentPlaybackPosition = " + currentPlaybackPosition);
+
         //create SimpleExoPlayer
         player = createPlayer(this.context);
 
@@ -169,6 +169,8 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
 
         //add listener to SimpleExoPlayer
         player.addListener(this);
+
+        firstTimeInstantiate = false;
     }
 
 
@@ -221,24 +223,28 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
 
 
     public void prepareSource(int lastPlayedSongIndex) {
+
+        if (firstTimeInstantiate) {
+            player.seekTo(currentPlaybackPosition);
+        } else {
+            player.seekToDefaultPosition();
+        }
+
         this.lastPlayedSongIndex = lastPlayedSongIndex;
         SongItem currentSongItem = currentList.get(this.lastPlayedSongIndex);
-        bus.send(new EventUpdatePlayerUI(currentSongItem, (int)currentPlaybackPosition));
+
+        //event bus update main player UI for next song
+        bus.send(new EventUpdatePlayerUI(currentSongItem, (int)currentPlaybackPosition, this.lastPlayedSongIndex));
 
         //put Parcelable extra and sendBroadcast
         Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
-//        notificationUpdateUIIntent.putExtra(CURRENT_PLAYING_SONG, currentSongItem);
         context.sendBroadcast(notificationUpdateUIIntent);
 
         MediaSource currentMediaSource = new ExtractorMediaSource.Factory(dataSourceFactory)
                 .createMediaSource(Uri.parse(currentSongItem.getSong().getSongUri()));
-        player.prepare(currentMediaSource, true, false); //TODO: test true true
+        player.prepare(currentMediaSource, true, false);
 
-//        if (currentPlaybackPosition > 0) {
-//            player.seekTo(currentPlaybackPosition);
-//        } else {
-//            player.seekToDefaultPosition();
-//        }
+        //seekTo
 
 
     }
@@ -469,7 +475,7 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         //current song playback position
         editor.putLong(CURRENT_PLAYBACK_POSITION, player.getCurrentPosition());
 
-        Log.i("WTF", "SAVELASTPLAYEDSONG: lastPlayedSongIndex = " + lastPlayedSongIndex + " - isShuffle = " + isShuffle + " - isRepeat = " + isRepeat + " - currentPlaybackPosition = " + player.getContentPosition() + " - " + player.getCurrentPosition() + " - " + player.getBufferedPosition());
+        Log.i("WTF", "SAVELASTPLAYEDSONG: lastPlayedSongIndex = " + lastPlayedSongIndex + " - isShuffle = " + isShuffle + " - isRepeat = " + isRepeat + " - currentPlaybackPosition = " + player.getContentPosition());
 
 
         editor.apply();

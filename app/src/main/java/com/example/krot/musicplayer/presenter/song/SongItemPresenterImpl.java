@@ -16,6 +16,7 @@ import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.example.krot.musicplayer.repository.SongItemRepository;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,7 +47,6 @@ public class SongItemPresenterImpl implements SongItemContract.SongItemPresenter
     }
 
 
-
     @SuppressLint("StaticFieldLeak")
     @Override
     public void loadData() {
@@ -66,7 +66,6 @@ public class SongItemPresenterImpl implements SongItemContract.SongItemPresenter
 
             @Override
             protected void onPostExecute(List<Item> items) {
-                Log.i("WTF", "onPostExecute");
                 songItemView.hideProgressBar();
                 songItemView.displaySongItemList(items);
             }
@@ -83,5 +82,31 @@ public class SongItemPresenterImpl implements SongItemContract.SongItemPresenter
     public SongItem getDefaultSong() {
         SongItem defaultSong = (SongItem) songItemRepository.retrieveSongListFromExternalStorage().get(0);
         return defaultSong;
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    @Override
+    public void updatePlayList(final List<Item> oldList, final int index) {
+        new AsyncTask<Void, Void, List<Item>>() {
+            @Override
+            protected List<Item> doInBackground(Void... voids) {
+                List<Item> newList = new ArrayList<>();
+                for (int i = 0; i < oldList.size(); i++) {
+                    Item currentItem = oldList.get(i);
+                    if (currentItem instanceof SongItem) {
+                        SongItem songItem = (SongItem) currentItem;
+                        newList.add(songItem);
+                    } else {
+                        newList.add(currentItem);
+                    }
+                }
+                return newList;
+            }
+
+            @Override
+            protected void onPostExecute(List<Item> itemList) {
+                songItemView.updatePlayListUI(itemList, index);
+            }
+        }.execute();
     }
 }

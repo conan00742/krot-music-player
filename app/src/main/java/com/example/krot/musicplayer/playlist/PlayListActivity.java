@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -51,9 +53,11 @@ import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.presenter.song.SongItemContract;
 import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
 import com.example.krot.musicplayer.queue.QueuePlayListActivity;
+import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 import com.example.krot.musicplayer.repository.SongItemRepository;
 import com.example.krot.musicplayer.service.ServiceUtils;
 import com.example.krot.musicplayer.service.SongPlaybackService;
+import com.example.krot.musicplayer.viewholder.SongItemViewHolder;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -70,6 +74,8 @@ import io.reactivex.functions.Consumer;
 
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAYBACK;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAY_NEXT_SONG;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAY_PREVIOUS_SONG;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_SAVE_CURRENT_PLAYLIST;
 import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
 import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
@@ -99,6 +105,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @BindView(R.id.ic_shuffle)
     ImageView icShuffle;
 
+
+
     @OnClick(R.id.ic_shuffle)
     public void doToggleShuffle() {
         if (SongPlaybackManager.getSongPlaybackManagerInstance().isShuffleOn()) {
@@ -125,11 +133,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
     @OnClick(R.id.ic_playback)
     public void doPlayBack() {
-//        if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
-//            SongPlaybackManager.getSongPlaybackManagerInstance().pause();
-//        } else {
-//            SongPlaybackManager.getSongPlaybackManagerInstance().play();
-//        }
         sendBroadcast(new Intent(ACTION_PLAYBACK));
     }
 
@@ -178,14 +181,19 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     private int second = 0;
     private String secondInString;
     private String minuteInString;
+    private int previousPlaybackSongPosition;
+    private int selectionCount = 0;
+    private PlaybackReceiver playbackReceiver;
 
     @OnClick(R.id.bottom_sheet_playlist)
     public void showPlaylist() {
+        //scroll to position with offset 0
+        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) musicRecyclerView.getLayoutManager();
+        linearLayoutManager.scrollToPositionWithOffset(previousPlaybackSongPosition, 0);
         if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         } else if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
             behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
         }
 
     }
@@ -205,6 +213,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_playback_song);
         ButterKnife.bind(this);
+
+        songTimeBar.setProgressTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
         lastSongPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
         behavior = BottomSheetBehavior.from(bottomSheetPlayList);
         songItemPresenter = new SongItemPresenterImpl(this);
@@ -228,10 +238,13 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
             @Override
             public void accept(Object o) throws Exception {
                 //Khi user click vào 1 bài nhạc trong list
+
                 if (o instanceof EventPlaySong) {
+                    behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     //Kiểm tra xem có shuffle hay ko
                     EventPlaySong eventPlaySong = (EventPlaySong) o;
-                    int selectedSongIndex = eventPlaySong.getPosition() - 1;
+                    int currentSongIndex = eventPlaySong.getPosition() - 1;
+
                     //EVENT_PICK_A_SONG
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isShuffleOn()) {
                         List<Item> defaultPlayList = songItemPresenter.getItemList();
@@ -240,17 +253,16 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                     }
 
 
-                    SongPlaybackManager.getSongPlaybackManagerInstance().setLastPlayedSongIndex(selectedSongIndex);
+                    SongPlaybackManager.getSongPlaybackManagerInstance().setLastPlayedSongIndex(currentSongIndex);
 
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
                         SongPlaybackManager.getSongPlaybackManagerInstance().pause();
-                        SongPlaybackManager.getSongPlaybackManagerInstance().prepareSource(selectedSongIndex);
+                        SongPlaybackManager.getSongPlaybackManagerInstance().prepareSource(currentSongIndex);
                     } else {
-                        SongPlaybackManager.getSongPlaybackManagerInstance().prepareSource(selectedSongIndex);
+                        SongPlaybackManager.getSongPlaybackManagerInstance().prepareSource(currentSongIndex);
                     }
 
                     SongPlaybackManager.getSongPlaybackManagerInstance().play();
-                    behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                 }
 
@@ -286,10 +298,9 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                     EventUpdatePlayerUI eventUpdatePlayerUI = (EventUpdatePlayerUI) o;
                     currentSongPosition = eventUpdatePlayerUI.getCurrentPlaybackPosition();
                     songDuration = eventUpdatePlayerUI.getCurrentSongItem().getSong().getDuration();
-                    updatePlayerView(eventUpdatePlayerUI.getCurrentSongItem(), eventUpdatePlayerUI.getCurrentPlaybackPosition());
-                }
-
-                else if (o instanceof EventIsPlaying) {
+                    selectionCount += 1;
+                    updatePlayerView(eventUpdatePlayerUI.getCurrentSongItem(), eventUpdatePlayerUI.getCurrentPlaybackPosition(), eventUpdatePlayerUI.getCurrentSongIndex());
+                } else if (o instanceof EventIsPlaying) {
                     icPlayback.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_pause));
                     doSeekToPosition();
                     //start service
@@ -298,20 +309,14 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                         playSongServiceIntent.setAction(ACTION_CREATE_NOTIFICATION);
                         startService(playSongServiceIntent);
                     }
-                }
-
-                else if (o instanceof EventIsPaused) {
+                } else if (o instanceof EventIsPaused) {
                     icPlayback.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_play));
                     if (counter != null) {
                         stopSeek();
                     }
-                }
-
-                else if (o instanceof EventEndSong) {
+                } else if (o instanceof EventEndSong) {
                     stopSeek();
-                }
-
-                else if (o instanceof EventShuffleOn) {
+                } else if (o instanceof EventShuffleOn) {
                     icShuffle.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_shuffle_on));
                 } else if (o instanceof EventShuffleOff) {
                     icShuffle.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_shuffle_off));
@@ -342,8 +347,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @Override
     protected void onResume() {
         super.onResume();
-        //ask for permissions for SDK 23+
-
     }
 
     @Override
@@ -354,7 +357,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @Override
     protected void onStop() {
         super.onStop();
-        SongPlaybackManager.getSongPlaybackManagerInstance().saveLastPlayedSong();
         SharedPreferences.Editor countEditor = lastSongPreferences.edit();
         countEditor.putBoolean(FIRST_TIME_INSTALL, false);
         countEditor.apply();
@@ -364,7 +366,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
     @Override
     protected void onRestart() {
-        Log.i("WTF", PREFIX + ": onRestart");
         super.onRestart();
     }
 
@@ -485,7 +486,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         songItemAdapter.setItemList(itemList);
         //set originalList
         SongPlaybackManager.getSongPlaybackManagerInstance().setOriginalList(playList);
-        Log.i("WTF", "---------- displaySongItemList: manager = " + SongPlaybackManager.getSongPlaybackManagerInstance());
     }
 
     @Override
@@ -498,8 +498,35 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         retrieveProgressbar.setVisibility(View.GONE);
     }
 
+    @Override
+    public void updatePlayListUI(List<Item> newList, int index) {
 
-    private void updatePlayerView(SongItem currentSongItem, int currentPlaybackPosition) {
+        if (selectionCount > 0) {
+            if (previousPlaybackSongPosition == 0) {
+                previousPlaybackSongPosition += 1;
+            }
+            SongItem previousItem = (SongItem) songItemAdapter.getItemAt(previousPlaybackSongPosition);
+            previousItem.setSelected(false);
+
+            newList.remove(previousPlaybackSongPosition);
+            newList.add(previousItem);
+        }
+
+        previousPlaybackSongPosition = index + 1;
+
+        SongItem newItem = (SongItem) songItemAdapter.getItemAt(previousPlaybackSongPosition);
+        newItem.setSelected(true);
+        newList.remove(previousPlaybackSongPosition);
+        newList.add(newItem);
+
+        songItemAdapter.updateListItem(newList);
+
+
+    }
+
+
+    //TODO: chỗ này gây lag
+    private void updatePlayerView(SongItem currentSongItem, int currentPlaybackPosition, int index) {
         if (currentSongItem.getSong() != null) {
             String songCover = null;
             Cursor coverCursor = getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
@@ -536,16 +563,23 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
             }
 
 
-
             tvCurrentPosition.setText(displayedSongMinute + ":" + displayedSongSecond);
             songTimeBar.setOnSeekBarChangeListener(this);
-            songTimeBar.setMax(((int)currentSongItem.getSong().getDuration()));
+
+
+            songTimeBar.setMax(((int) currentSongItem.getSong().getDuration()));
             songTimeBar.setProgress(currentPlaybackPosition);
             tvDuration.setText(SongItemRepository.convertDuration(currentSongItem.getSong().getDuration()));
             songName.setText(currentSongItem.getSong().getSongTitle());
             songName.setSelected(true);
             artistName.setText(currentSongItem.getSong().getArtistName());
             artistName.setSelected(true);
+
+
+            //TODO: lag quá
+            List<Item> oldList = songItemAdapter.getCurrentItemList();
+            songItemPresenter.updatePlayList(oldList, index);
+
         } else {
             songName.setText("???");
             artistName.setText("???");
@@ -554,9 +588,12 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     }
 
 
-    /**USER SEEK TIMEBAR**/
+    /**
+     * USER SEEK TIMEBAR
+     **/
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        Log.i("KHIEM", "onProgressChanged");
 
         if (fromUser) {
             currentSongPosition = seekBar.getProgress();
@@ -583,10 +620,12 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
+        Log.i("KHIEM", "onStartTrackingTouch");
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
+        Log.i("KHIEM", "onStopTrackingTouch");
         stopSeek();
         SongPlaybackManager.getSongPlaybackManagerInstance().seek(seekBar.getProgress());
 
@@ -608,8 +647,9 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                     }
                 });
             }
-        }, 0, 1000);
+        }, 0, 500);
     }
+
 
     private void stopSeek() {
         counter.cancel();

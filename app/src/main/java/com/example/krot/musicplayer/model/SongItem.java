@@ -14,8 +14,11 @@ public class SongItem implements Item, Parcelable{
     @Nullable
     private Song mSong;
 
-    public SongItem(Song mSong) {
+    private boolean isSelected;
+
+    public SongItem(Song mSong, boolean isSelected) {
         this.mSong = mSong;
+        this.isSelected = isSelected;
     }
 
     protected SongItem(Parcel in) {
@@ -39,6 +42,14 @@ public class SongItem implements Item, Parcelable{
         return mSong;
     }
 
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SongItem) {
@@ -56,7 +67,8 @@ public class SongItem implements Item, Parcelable{
                 &&  this.getSong().getSongUri().equals(mCurrentSongItem.getSong().getSongUri())
                 &&  this.getSong().getSongTitle().equals(mCurrentSongItem.getSong().getSongId())
                 &&  this.getSong().getArtistName().equals(mCurrentSongItem.getSong().getArtistName())
-                &&  this.getSong().getDuration() == mCurrentSongItem.getSong().getDuration());
+                &&  this.getSong().getDuration() == mCurrentSongItem.getSong().getDuration()
+                &&  this.isSelected() == mCurrentSongItem.isSelected());
     }
 
     @Override

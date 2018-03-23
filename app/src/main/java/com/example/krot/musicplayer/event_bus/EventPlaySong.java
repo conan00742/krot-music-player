@@ -12,6 +12,7 @@ public class EventPlaySong {
 
     private final SongItemViewHolder holder;
 
+
     public EventPlaySong(int position, SongItemViewHolder holder) {
         this.position = position;
         this.holder = holder;
@@ -24,4 +25,5 @@ public class EventPlaySong {
     public SongItemViewHolder getHolder() {
         return holder;
     }
+
 }

@@ -58,22 +58,42 @@ public class SongItemViewHolder extends ItemBaseViewHolder<SongItem> {
     public void bindData(@Nullable SongItem item) {
         super.bindData(item);
 
-        //song title
-        mSongTitle.setText(item.getSong().getSongTitle());
+        if (item.getSong() != null) {
 
-        //duration
-        mDuration.setText(SongItemRepository.convertDuration(item.getSong().getDuration()));
+            //song title selected
+            mSongTitle.setText(item.getSong().getSongTitle());
 
-        //artist name
-        mArtistName.setText(item.getSong().getArtistName());
+            //duration selected
+            mDuration.setText(SongItemRepository.convertDuration(item.getSong().getDuration()));
 
+            //artist name selected
+            mArtistName.setText(item.getSong().getArtistName());
+
+            if (item.isSelected()) {
+                mSongTitle.setTextColor(mContext.getResources().getColor(R.color.orange));
+                mDuration.setTextColor(mContext.getResources().getColor(R.color.orange));
+                mArtistName.setTextColor(mContext.getResources().getColor(R.color.orange));
+            } else {
+                mSongTitle.setTextColor(mContext.getResources().getColor(R.color.default_song_text_color));
+                mDuration.setTextColor(mContext.getResources().getColor(R.color.default_song_text_color));
+                mArtistName.setTextColor(mContext.getResources().getColor(R.color.grey));
+            }
+
+
+        }
 
     }
 
     @OnClick(R.id.song_container)
     public void doPlaySong() {
-        Log.i("WTF", "sendBus");
+        Log.i("WTF", "select song: item = " + item);
+        if (item != null) {
+            item.setSelected(true);
+        }
+
         RxBus.getInstance().send(new EventPlaySong(getAdapterPosition(), SongItemViewHolder.this));
+
     }
+
 
 }

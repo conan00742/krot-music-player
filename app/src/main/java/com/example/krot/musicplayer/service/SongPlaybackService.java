@@ -1,6 +1,7 @@
 package com.example.krot.musicplayer.service;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -10,7 +11,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -23,6 +26,7 @@ import android.widget.RemoteViews;
 import com.example.krot.musicplayer.R;
 import com.example.krot.musicplayer.SongPlaybackManager;
 import com.example.krot.musicplayer.model.SongItem;
+import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_NOTIFICATION_NEXT;
@@ -59,15 +63,18 @@ public class SongPlaybackService extends Service {
 
     @Override
     public void onCreate() {
-        Log.i("WTF", PREFIX + ": onCreate");
         super.onCreate();
         manager = SongPlaybackManager.getSongPlaybackManagerInstance();
+
+        //Service Broadcast Receiver
         receiver = new PlaybackServiceReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_UPDATE_UI);
         intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PLAYING);
         intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PAUSED);
         registerReceiver(receiver, intentFilter);
+
+
         songPlaybackRemoteViews = new RemoteViews(getPackageName(), R.layout.player_notification);
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         songPlaybackRemoteViews = new RemoteViews(getPackageName(), R.layout.player_notification);
@@ -79,7 +86,6 @@ public class SongPlaybackService extends Service {
             String action = intent.getAction();
             if (action != null) {
                 if (TextUtils.equals(ACTION_CREATE_NOTIFICATION, action)) {
-                    Log.i("WTF", "----------------CREATE NOTIFICATION--------------");
                     createSongPlaybackNotification();
                     //start foreground service
                     startForeground(1001, playbackNotification);
@@ -97,24 +103,37 @@ public class SongPlaybackService extends Service {
 
     @Override
     public void onDestroy() {
-        Log.i("WTF", PREFIX + ": onDestroy");
         super.onDestroy();
         unregisterReceiver(receiver);
         manager.releasePlayer();
     }
 
+
     //create song playback notification
     private void createSongPlaybackNotification() {
+        NotificationCompat.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = getResources().getString(R.string.playback_channel_id);
+            String channelName = getResources().getString(R.string.playback_channel_name);
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            String channelDescription = getResources().getString(R.string.playback_channel_description);
+            NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName, importance);
+            notificationChannel.setDescription(channelDescription);
+            notificationChannel.enableLights(true);
+            notificationChannel.setLightColor(Color.GREEN);
+            notificationManager.createNotificationChannel(notificationChannel);
+            builder = new NotificationCompat.Builder(context, channelId);
+        } else {
+            builder = new NotificationCompat.Builder(context);
+        }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, getString(R.string.playback_channel_id))
-                .setCustomBigContentView(getRemoteView())
+        builder.setCustomBigContentView(getRemoteView())
                 .setContentTitle("SongPlayback Notification")
                 .setSmallIcon(R.drawable.ic_playback_notification_icon)
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.ic_playback_notification_icon))
                 .setContentText("this is content text")
                 .setSubText("sub text")
-                .setOngoing(true)
-                .setPriority(Notification.PRIORITY_MAX);
+                .setOngoing(true);
 
         playbackNotification = builder.build();
     }
@@ -129,7 +148,7 @@ public class SongPlaybackService extends Service {
         }
         updatePlaybackNotificationUI();
 
-        Intent actionPlaybackIntent = new Intent(ACTION_PLAYBACK);
+        Intent actionPlaybackIntent = new Intent(ACTION_PLAYBACK);//
         Intent actionNextIntent = new Intent(ACTION_PLAY_NEXT_SONG);
         Intent actionPreviousIntent = new Intent(ACTION_PLAY_PREVIOUS_SONG);
 
@@ -146,7 +165,6 @@ public class SongPlaybackService extends Service {
 
     private void updatePlaybackNotificationUI() {
         SongItem currentPlaybackSongItem = manager.getCurrentPlaybackSong();
-        Log.i("NHI", "updatePlaybackNotificationUI: songName = " + currentPlaybackSongItem.getSong().getSongTitle());
         if (currentPlaybackSongItem.getSong() != null) {
             String songCover = null;
             Cursor coverCursor = getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
@@ -196,16 +214,11 @@ public class SongPlaybackService extends Service {
                 String action = intent.getAction();
                 if (action != null) {
                     if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
-                        Log.i("NHI", "ACTION_UPDATE_UI");
                         updatePlaybackNotificationUI();
                         notificationManager.notify(1001, playbackNotification);
-                    }
-
-                    else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PLAYING, action)) {
+                    } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PLAYING, action)) {
                         updateNotificationIsPlayingIcon();
-                    }
-
-                    else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PAUSED, action)) {
+                    } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PAUSED, action)) {
                         updateNotificationIsPausedIcon();
                     }
                 }

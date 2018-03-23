@@ -1,12 +1,14 @@
 package com.example.krot.musicplayer.adapter;
 
 import android.support.annotation.Nullable;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
+import com.example.krot.musicplayer.util.ItemUtil;
 import com.example.krot.musicplayer.viewholder.ItemBaseViewHolder;
 
 import java.util.List;
@@ -27,6 +29,8 @@ public abstract class ItemBaseAdapter extends RecyclerView.Adapter<ItemBaseViewH
     }
 
     public void updateListItem(@Nullable List<Item> newItemList) {
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new ItemUtil(mCurrentItemList, newItemList));
+        result.dispatchUpdatesTo(ItemBaseAdapter.this);
 
     }
 
