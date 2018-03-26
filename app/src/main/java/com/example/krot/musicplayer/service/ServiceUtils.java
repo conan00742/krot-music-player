@@ -14,12 +14,22 @@ import java.util.List;
 public class ServiceUtils {
 
 
-    public static boolean isServiceStarted(String serviceClassName) {
-        final ActivityManager activityManager = (ActivityManager) MusicPlayerApp.getAppContext().getSystemService(Context.ACTIVITY_SERVICE);
-        final List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+    public static boolean isServiceStarted(Class<?> serviceClass) {
+//        final ActivityManager activityManager = (ActivityManager) MusicPlayerApp.getAppContext()
+//                .getSystemService(Context.ACTIVITY_SERVICE);
+//
+//        final List<ActivityManager.RunningServiceInfo> services = activityManager.getRunningServices(Integer.MAX_VALUE);
+//
+//        for (ActivityManager.RunningServiceInfo runningServiceInfo : services) {
+//            if (runningServiceInfo.service.getClassName().equals(serviceClassName)){
+//                return true;
+//            }
+//        }
+//        return false;
 
-        for (ActivityManager.RunningServiceInfo runningServiceInfo : services) {
-            if (runningServiceInfo.service.getClassName().equals(serviceClassName)){
+        ActivityManager manager = (ActivityManager) MusicPlayerApp.getAppContext().getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }

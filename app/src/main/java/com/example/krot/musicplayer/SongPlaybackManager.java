@@ -21,6 +21,7 @@ import com.example.krot.musicplayer.event_bus.EventRepeatOff;
 import com.example.krot.musicplayer.event_bus.EventRepeatOn;
 import com.example.krot.musicplayer.event_bus.EventShuffleOff;
 import com.example.krot.musicplayer.event_bus.EventShuffleOn;
+import com.example.krot.musicplayer.event_bus.EventUpdateMiniPlaybackUI;
 import com.example.krot.musicplayer.event_bus.EventUpdatePlayerUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
@@ -205,6 +206,15 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         this.originalList = originalList;
     }
 
+    @Nullable
+    public List<Item> getOriginalList() {
+        List<Item> originalItemList = new ArrayList<>();
+        if (originalList != null) {
+            originalItemList.addAll(this.originalList);
+        }
+        return originalItemList;
+    }
+
     public void setLastPlayedSongIndex(int lastPlayedSongIndex) {
         this.lastPlayedSongIndex = lastPlayedSongIndex;
     }
@@ -232,6 +242,9 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
 
         this.lastPlayedSongIndex = lastPlayedSongIndex;
         SongItem currentSongItem = currentList.get(this.lastPlayedSongIndex);
+
+        //event bus update mini playback control UI in home
+        bus.send(new EventUpdateMiniPlaybackUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
 
         //event bus update main player UI for next song
         bus.send(new EventUpdatePlayerUI(currentSongItem, (int)currentPlaybackPosition, this.lastPlayedSongIndex));

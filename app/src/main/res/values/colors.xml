@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#4E5F57</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="orange">#FF8400</color>
+    <color name="colorPrimary">#607D8B</color>
+    <color name="colorPrimaryDark">#455A64</color>
+    <color name="colorAccent">#2962FF</color>
+    <color name="orange">#FF5722</color>
     <color name="grey">#D6D2D1</color>
     <color name="default_song_text_color">#F8F8F8</color>
 </resources>

@@ -5,4 +5,17 @@
     <string name="playback_channel_id">1359033</string>
     <string name="playback_channel_name">Krot Player Channel</string>
     <string name="playback_channel_description">Krot Player Channel Description</string>
+    <string name="title_activity_home">HomeActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="drawer_item_home">Home</string>
+    <string name="drawer_item_play_queue">Play queue</string>
+    <string name="drawer_item_playlists">Playlists</string>
+    <string name="drawer_item_artists">Artists</string>
+    <string name="drawer_item_albums">Albums</string>
+    <string name="drawer_item_songs">Songs</string>
 </resources>

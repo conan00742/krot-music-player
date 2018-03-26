@@ -28,6 +28,7 @@ import com.example.krot.musicplayer.SongPlaybackManager;
 import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_CANCEL_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_NOTIFICATION_NEXT;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_NOTIFICATION_PLAYBACK;
@@ -39,6 +40,7 @@ import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICA
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PLAYING;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_UI;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYING_SONG;
+import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTIFICATION_ID;
 
 /**
  * Created by Krot on 3/14/18.
@@ -104,8 +106,10 @@ public class SongPlaybackService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.i("WTF", "-@-@-@-@-@-@-@-@-@-@-@: service DESTROYED");
         unregisterReceiver(receiver);
         manager.releasePlayer();
+        notificationManager.cancelAll();
     }
 
 
@@ -127,6 +131,9 @@ public class SongPlaybackService extends Service {
             builder = new NotificationCompat.Builder(context);
         }
 
+
+        //TODO: kill app -> kill service hay không?
+
         builder.setCustomBigContentView(getRemoteView())
                 .setContentTitle("SongPlayback Notification")
                 .setSmallIcon(R.drawable.ic_playback_notification_icon)
@@ -146,15 +153,19 @@ public class SongPlaybackService extends Service {
         } else {
             songPlaybackRemoteViews.setImageViewResource(R.id.ic_noti_play, R.drawable.ic_notification_play);
         }
+
         updatePlaybackNotificationUI();
 
-        Intent actionPlaybackIntent = new Intent(ACTION_PLAYBACK);//
+        Intent actionPlaybackIntent = new Intent(ACTION_PLAYBACK);
         Intent actionNextIntent = new Intent(ACTION_PLAY_NEXT_SONG);
         Intent actionPreviousIntent = new Intent(ACTION_PLAY_PREVIOUS_SONG);
+
+
 
         PendingIntent playbackPendingIntent = PendingIntent.getBroadcast(context, 0, actionPlaybackIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent playNextPendingIntent = PendingIntent.getBroadcast(context, 0, actionNextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent playPreviousPendingIntent = PendingIntent.getBroadcast(context, 0, actionPreviousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
 
         songPlaybackRemoteViews.setOnClickPendingIntent(R.id.ic_noti_play, playbackPendingIntent);
         songPlaybackRemoteViews.setOnClickPendingIntent(R.id.ic_noti_next, playNextPendingIntent);
@@ -198,12 +209,18 @@ public class SongPlaybackService extends Service {
 
     private void updateNotificationIsPlayingIcon() {
         songPlaybackRemoteViews.setImageViewResource(R.id.ic_noti_play, R.drawable.ic_notification_pause);
-        notificationManager.notify(1001, playbackNotification);
+        if (notificationManager != null) {
+            notificationManager.notify(1001, playbackNotification);
+        }
+
     }
 
     private void updateNotificationIsPausedIcon() {
         songPlaybackRemoteViews.setImageViewResource(R.id.ic_noti_play, R.drawable.ic_notification_play);
-        notificationManager.notify(1001, playbackNotification);
+        if (notificationManager != null) {
+            notificationManager.notify(1001, playbackNotification);
+        }
+
     }
 
     private class PlaybackServiceReceiver extends BroadcastReceiver {
@@ -215,7 +232,6 @@ public class SongPlaybackService extends Service {
                 if (action != null) {
                     if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
                         updatePlaybackNotificationUI();
-                        notificationManager.notify(1001, playbackNotification);
                     } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PLAYING, action)) {
                         updateNotificationIsPlayingIcon();
                     } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PAUSED, action)) {

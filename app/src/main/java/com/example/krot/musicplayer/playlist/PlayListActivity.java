@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
@@ -50,14 +49,15 @@ import com.example.krot.musicplayer.event_bus.EventUpdatePlayerUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.presenter.song.SongItemContract;
+import com.example.krot.musicplayer.presenter.PickSongContract;
+import com.example.krot.musicplayer.presenter.SongItemContract;
+import com.example.krot.musicplayer.presenter.song.PickSongPresenterImpl;
 import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
 import com.example.krot.musicplayer.queue.QueuePlayListActivity;
 import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 import com.example.krot.musicplayer.repository.SongItemRepository;
 import com.example.krot.musicplayer.service.ServiceUtils;
 import com.example.krot.musicplayer.service.SongPlaybackService;
-import com.example.krot.musicplayer.viewholder.SongItemViewHolder;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
@@ -74,15 +74,10 @@ import io.reactivex.functions.Consumer;
 
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAYBACK;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAY_NEXT_SONG;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAY_PREVIOUS_SONG;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_SAVE_CURRENT_PLAYLIST;
 import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
-import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
-import static com.example.krot.musicplayer.AppConstantTag.PERMISSION_CODE;
-import static com.example.krot.musicplayer.AppConstantTag.REQUEST_PERMISSION_SETTING;
 
-public class PlayListActivity extends AppCompatActivity implements SongItemContract.SongItemView, SeekBar.OnSeekBarChangeListener {
+public class PlayListActivity extends AppCompatActivity implements PickSongContract.PickSongView, SeekBar.OnSeekBarChangeListener {
 
     private static final String PREFIX = PlayListActivity.class.getSimpleName();
 
@@ -184,6 +179,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     private int previousPlaybackSongPosition;
     private int selectionCount = 0;
     private PlaybackReceiver playbackReceiver;
+    private SongItemAdapter songItemAdapter;
+    private PickSongContract.PickSongPresenter pickSongPresenter;
 
     @OnClick(R.id.bottom_sheet_playlist)
     public void showPlaylist() {
@@ -205,8 +202,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         overridePendingTransition(R.anim.slide_in_from_right_animation, R.anim.slide_out_to_left_animation);
     }
 
-    private SongItemContract.SongItemPresenter songItemPresenter;
-    private SongItemAdapter songItemAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,17 +213,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         songTimeBar.setProgressTintList(ColorStateList.valueOf(getResources().getColor(R.color.orange)));
         lastSongPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
         behavior = BottomSheetBehavior.from(bottomSheetPlayList);
-        songItemPresenter = new SongItemPresenterImpl(this);
+        pickSongPresenter = new PickSongPresenterImpl(this);
         setupAdapter();
-
-        //request permission
-        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        if (!hasPermissions(this, permissions)) {
-            ActivityCompat.requestPermissions(this, permissions, PERMISSION_CODE);
-        } else {
-            songItemPresenter.loadData();
-        }
-
 
     }
 
@@ -247,7 +234,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
                     //EVENT_PICK_A_SONG
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isShuffleOn()) {
-                        List<Item> defaultPlayList = songItemPresenter.getItemList();
+                        List<Item> defaultPlayList = SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList();
                         SongPlaybackManager.getSongPlaybackManagerInstance().setCurrentList(defaultPlayList);
                         SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOff();
                     }
@@ -270,7 +257,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                 else if (o instanceof EventShuffleAllSongs) {
                     //EVENT_SHUFFLE_ALL_SONGS
                     // 1. Re-shuffle the original list
-                    List<Item> originalList = songItemPresenter.getItemList();
+                    List<Item> originalList = SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList();
 
                     if (shuffledList == null || shuffledList.isEmpty()) {
                         shuffledList = randomShuffle(originalList);
@@ -304,7 +291,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
                     icPlayback.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_pause));
                     doSeekToPosition();
                     //start service
-                    if (!ServiceUtils.isServiceStarted(SongPlaybackService.class.getName())) {
+                    if (!ServiceUtils.isServiceStarted(SongPlaybackService.class)) {
                         Intent playSongServiceIntent = new Intent(PlayListActivity.this, SongPlaybackService.class);
                         playSongServiceIntent.setAction(ACTION_CREATE_NOTIFICATION);
                         startService(playSongServiceIntent);
@@ -328,6 +315,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
             }
         });
+
+        songItemAdapter.updateListItem(SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList());
     }
 
     private List<Item> randomShuffle(List<Item> currentPlayList) {
@@ -357,10 +346,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @Override
     protected void onStop() {
         super.onStop();
-        SharedPreferences.Editor countEditor = lastSongPreferences.edit();
-        countEditor.putBoolean(FIRST_TIME_INSTALL, false);
-        countEditor.apply();
-        sendBroadcast(new Intent(ACTION_SAVE_CURRENT_PLAYLIST));
         disposable.dispose();
     }
 
@@ -372,20 +357,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopService(new Intent(PlayListActivity.this, SongPlaybackService.class));
     }
 
-    private boolean hasPermissions(Context context, String... permissionQueue) {
-        if (context != null && permissionQueue != null) {
-            for (String permission : permissionQueue) {
-                if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
 
     @Override
     public void onBackPressed() {
@@ -397,58 +370,6 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_CODE:
-                if (grantResults.length > 0) {
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        songItemPresenter.loadData();
-                    } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                        boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-                        if (shouldShowRationale) {
-                            //show the reason why user must grant STORAGE permission
-                            //show dialog
-                            new AlertDialog.Builder(this).setTitle("Permission Denied").setMessage(R.string.permission_rationale).setPositiveButton("RE-TRY", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    ActivityCompat.requestPermissions(PlayListActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_CODE);
-                                }
-                            }).setNegativeButton("I'M SURE", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    dialogInterface.dismiss();
-                                }
-                            }).show();
-
-                        } else {
-                            //never ask again
-                            //close dialog and do nothing
-                            new AlertDialog.Builder(this)
-                                    .setTitle("Grant permission")
-                                    .setMessage(R.string.app_setting_permission)
-                                    .setPositiveButton("Open", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            Intent appSettingIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                            Uri uri = Uri.fromParts("package", getPackageName(), null);
-                                            appSettingIntent.setData(uri);
-                                            startActivityForResult(appSettingIntent, REQUEST_PERMISSION_SETTING);
-                                        }
-                                    })
-                                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-
-                                        }
-                                    }).show();
-                        }
-                    }
-                }
-
-                break;
-        }
-    }
 
     private void setupAdapter() {
         songItemAdapter = new SongItemAdapter(this);
@@ -460,43 +381,8 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
         musicRecyclerView.addItemDecoration(new DividerItemDecoration(musicDividerDecoration));
     }
 
-    @Override
-    public void displaySongItemList(List<Item> itemList) {
+    //TODO: songItemAdapter.setItemList(itemList);
 
-        List<SongItem> playList = new ArrayList<>();
-        for (int i = 0; i < itemList.size(); i++) {
-            Item currentItem = itemList.get(i);
-            if (!(currentItem instanceof SongItem)) {
-                continue;
-            }
-
-            SongItem currentSongItem = (SongItem) currentItem;
-            playList.add(currentSongItem);
-
-        }
-
-        //store the original list to sharedpreferences
-        Gson gson = new Gson();
-        String originalPlayListInString = gson.toJson(playList);
-        SharedPreferences.Editor editor = lastSongPreferences.edit();
-        editor.putString(ORIGINAL_PLAYLIST, originalPlayListInString);
-        editor.apply();
-
-        //update UI of the playlist recyclerview
-        songItemAdapter.setItemList(itemList);
-        //set originalList
-        SongPlaybackManager.getSongPlaybackManagerInstance().setOriginalList(playList);
-    }
-
-    @Override
-    public void showProgressBar() {
-        retrieveProgressbar.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void hideProgressBar() {
-        retrieveProgressbar.setVisibility(View.GONE);
-    }
 
     @Override
     public void updatePlayListUI(List<Item> newList, int index) {
@@ -578,7 +464,7 @@ public class PlayListActivity extends AppCompatActivity implements SongItemContr
 
             //TODO: lag quá
             List<Item> oldList = songItemAdapter.getCurrentItemList();
-            songItemPresenter.updatePlayList(oldList, index);
+            pickSongPresenter.updatePlayList(oldList, index);
 
         } else {
             songName.setText("???");
