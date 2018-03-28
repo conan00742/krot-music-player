@@ -1,22 +1,13 @@
 package com.example.krot.musicplayer.playlist;
 
-import android.Manifest;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.provider.MediaStore;
-import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -33,6 +24,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.dgreenhalgh.android.simpleitemdecoration.linear.DividerItemDecoration;
+import com.example.krot.musicplayer.Helper;
 import com.example.krot.musicplayer.R;
 import com.example.krot.musicplayer.SongPlaybackManager;
 import com.example.krot.musicplayer.adapter.SongItemAdapter;
@@ -50,15 +42,11 @@ import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.presenter.PickSongContract;
-import com.example.krot.musicplayer.presenter.SongItemContract;
 import com.example.krot.musicplayer.presenter.song.PickSongPresenterImpl;
-import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
 import com.example.krot.musicplayer.queue.QueuePlayListActivity;
 import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 import com.example.krot.musicplayer.repository.SongItemRepository;
-import com.example.krot.musicplayer.service.ServiceUtils;
 import com.example.krot.musicplayer.service.SongPlaybackService;
-import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,8 +62,6 @@ import io.reactivex.functions.Consumer;
 
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAYBACK;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_SAVE_CURRENT_PLAYLIST;
-import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
 
 public class PlayListActivity extends AppCompatActivity implements PickSongContract.PickSongView, SeekBar.OnSeekBarChangeListener {
 
@@ -291,7 +277,7 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
                     icPlayback.setImageDrawable(ContextCompat.getDrawable(PlayListActivity.this, R.drawable.ic_pause));
                     doSeekToPosition();
                     //start service
-                    if (!ServiceUtils.isServiceStarted(SongPlaybackService.class)) {
+                    if (!Helper.isServiceStarted(SongPlaybackService.class)) {
                         Intent playSongServiceIntent = new Intent(PlayListActivity.this, SongPlaybackService.class);
                         playSongServiceIntent.setAction(ACTION_CREATE_NOTIFICATION);
                         startService(playSongServiceIntent);

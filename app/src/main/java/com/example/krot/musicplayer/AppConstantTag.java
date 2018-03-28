@@ -23,7 +23,9 @@ public class AppConstantTag {
     public static final String ACTION_PLAY_NEXT_SONG = "com.example.krot.musicplayer.ACTION_PLAY_NEXT_SONG";
     public static final String ACTION_PLAY_PREVIOUS_SONG = "com.example.krot.musicplayer.ACTION_PLAY_PREVIOUS_SONG";
     public static final String ACTION_UPDATE_UI = "com.example.krot.musicplayer.ACTION_UPDATE_UI";
-    public static final String ACTION_CANCEL_NOTIFICATION = "com.example.krot.musicplayer.ACTION_CANCEL_NOTIFICATION";
+    public static final String ACTION_DISMISS_NOTIFICATION = "com.example.krot.musicplayer.ACTION_DISMISS_NOTIFICATION";
+    public static final String ACTION_ENABLE_SWIPEABLE = "com.example.krot.musicplayer.ACTION_ENABLE_SWIPEABLE";
+    public static final String ACTION_DISABLE_SWIPEABLE = "com.example.krot.musicplayer.ACTION_DISABLE_SWIPEABLE";
 
     //local action
     public static final String ACTION_SAVE_CURRENT_PLAYLIST = "com.example.krot.musicplayer.ACTION_SAVE_CURRENT_PLAYLIST";
@@ -36,6 +38,7 @@ public class AppConstantTag {
 
     public static final int PERMISSION_CODE = 101;
     public static final int REQUEST_PERMISSION_SETTING = 90;
+    public static final int PLAYBACK_NOTI_ID = 1001;
     public static final String PLAYLIST_TAG = "PLAY_LIST_TAG";
     public static final String MANAGER_OBJECT_EXTRA_TAG = "MANAGER_OBJECT_EXTRA_TAG";
     public static final String PRESENTER_OBJECT_EXTRA_TAG = "PRESENTER_OBJECT_EXTRA_TAG";

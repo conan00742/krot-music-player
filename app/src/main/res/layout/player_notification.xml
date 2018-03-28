@@ -8,7 +8,6 @@
         android:id="@+id/img_noti_song_cover"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:background="#f441"
         android:scaleType="centerCrop" />
 
     <TextView
@@ -41,6 +40,15 @@
         android:text="fdsgsfgdfhdf"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="#DDD7D5" />
+
+    <!--<ImageView-->
+        <!--android:id="@+id/ic_noti_cancel"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:background="@drawable/ic_cancel"-->
+        <!--android:layout_marginEnd="6dp"-->
+        <!--android:layout_marginTop="3dp"-->
+        <!--android:layout_alignParentEnd="true"/>-->
 
 
     <FrameLayout

@@ -36,6 +36,16 @@
                 <action android:name="com.example.krot.musicplayer.ACTION_CANCEL_NOTIFICATION" />
             </intent-filter>
         </receiver>
+
+
+        <receiver android:name=".receiver.NotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.krot.musicplayer.ACTION_DISMISS_NOTIFICATION" />
+                <action android:name="com.example.krot.musicplayer.ACTION_ENABLE_SWIPEABLE" />
+                <action android:name="com.example.krot.musicplayer.ACTION_DISABLE_SWIPEABLE" />
+            </intent-filter>
+        </receiver>
         <!-- font -->
         <meta-data
             android:name="preloaded_fonts"

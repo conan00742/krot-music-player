@@ -35,11 +35,8 @@ import com.example.krot.musicplayer.event_bus.EventUpdateMiniPlaybackUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.example.krot.musicplayer.presenter.SongItemContract;
 import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
-import com.example.krot.musicplayer.service.ServiceUtils;
-import com.example.krot.musicplayer.service.SongPlaybackService;
 import com.google.gson.Gson;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -55,7 +52,6 @@ import butterknife.OnClick;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAYBACK;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_SAVE_CURRENT_PLAYLIST;
 import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
@@ -124,11 +120,11 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
         //request permission
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         if (!hasPermissions(this, permissions)) {
-            Log.i("WTF", ">>>>>>>>>>>>>BEFORE: NOT GRANTED");
+            Log.i("GODZILLA", ">>>>>>>>>>>>>BEFORE: NOT GRANTED");
             displayDefaultUI();
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_CODE);
         } else {
-            Log.i("WTF", ">>>>>>>>>>>>>BEFORE: GRANTED");
+            Log.i("GODZILLA", ">>>>>>>>>>>>>BEFORE: GRANTED");
             songItemPresenter.loadData();
         }
 
@@ -152,7 +148,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
             case PERMISSION_CODE:
                 if (grantResults.length > 0) {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.i("WTF", ">>>>>>>>>>>>>AFTER: GRANTED");
+                        Log.i("GODZILLA", ">>>>>>>>>>>>>AFTER: GRANTED");
                         songItemPresenter.loadData();
                     } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                         boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -189,7 +185,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
                                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialogInterface, int i) {
-
+                                            finish();
                                         }
                                     }).show();
                         }
@@ -209,16 +205,12 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
             public void accept(Object o) throws Exception {
                 if (o instanceof EventUpdateMiniPlaybackUI) {
                     EventUpdateMiniPlaybackUI eventUpdateMiniPlaybackUI = (EventUpdateMiniPlaybackUI) o;
+                    Log.i("GODZILLA", "EventUpdateMiniPlaybackUI: songName = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getSongTitle() + " // artist = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getArtistName());
                     updateMiniPlaybackControlUI(eventUpdateMiniPlaybackUI.getCurrentSongItem());
                 }
 
                 else if (o instanceof EventIsPlaying) {
                     icMiniPlayback.setImageDrawable(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_mini_pause));
-                    if (!ServiceUtils.isServiceStarted(SongPlaybackService.class)) {
-                        Intent playSongServiceIntent = new Intent(HomeActivity.this, SongPlaybackService.class);
-                        playSongServiceIntent.setAction(ACTION_CREATE_NOTIFICATION);
-                        startService(playSongServiceIntent);
-                    }
                 }
 
                 else if (o instanceof EventIsPaused) {
@@ -323,7 +315,6 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     }
 
 
-
     @Override
     public void showProgressBar() {
         loadingProgress.setVisibility(View.VISIBLE);
@@ -336,6 +327,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
 
     @Override
     public void setOriginalList(List<Item> originalList) {
+        Log.i("GODZILLA", "SetOriginalList");
         List<SongItem> originalSongItemList = new ArrayList<>();
         for (int i = 0; i < originalList.size(); i++) {
             Item currentItem = originalList.get(i);
@@ -352,6 +344,14 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
         editor.putString(ORIGINAL_PLAYLIST, originalPlayListInString);
         editor.apply();
 
+        if (SongPlaybackManager.getSongPlaybackManagerInstance().getPlayer() != null) {
+            Log.i("GODZILLA", "************** player = " + SongPlaybackManager.getSongPlaybackManagerInstance().getPlayer());
+        } else {
+            Log.i("GODZILLA", "************** player = null");
+        }
+
+
+        //TODO: phải tạo lại manager
         SongPlaybackManager.getSongPlaybackManagerInstance().setOriginalList(originalSongItemList);
     }
 
