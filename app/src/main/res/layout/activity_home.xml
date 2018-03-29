@@ -40,15 +40,17 @@
 
 
         <LinearLayout
+            android:id="@+id/mini_song_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.13">
 
             <!--mini playback controller-->
             <ImageView
-                android:id="@+id/mini_song_cover"
+                android:id="@+id/img_track_background"
                 android:layout_width="75dp"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:transitionName="@string/shared_song_cover"/>
 
             <LinearLayout
                 android:layout_width="0dp"

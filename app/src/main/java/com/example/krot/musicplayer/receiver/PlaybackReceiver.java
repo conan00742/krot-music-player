@@ -33,6 +33,10 @@ public class PlaybackReceiver extends BroadcastReceiver {
                 if (TextUtils.equals(ACTION_PLAYBACK, playerAction)) {
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
                         SongPlaybackManager.getSongPlaybackManagerInstance().pause();
+                        if (Helper.isServiceStarted(SongPlaybackService.class)) {
+                            Intent stopPlaySongServiceIntent = new Intent(context, SongPlaybackService.class);
+                            context.stopService(stopPlaySongServiceIntent);
+                        }
                     } else {
                         SongPlaybackManager.getSongPlaybackManagerInstance().play();
                         //startService

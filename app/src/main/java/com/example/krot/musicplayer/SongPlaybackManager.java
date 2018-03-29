@@ -67,21 +67,23 @@ import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYLIST_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_REPEAT_MODE_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_SHUFFLE_MODE_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
+import static com.example.krot.musicplayer.AppConstantTag.KILL_APP_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.LAST_PLAYED_SONG_INDEX_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
+import static com.example.krot.musicplayer.AppConstantTag.RESET_TAG;
 
 /**
  * Created by Krot on 2/9/18.
  */
 
-//TODO: SongPlaybackManager extends Service
 public class SongPlaybackManager implements Player.EventListener, AudioManager.OnAudioFocusChangeListener {
 
     private static SongPlaybackManager manager;
     private SimpleExoPlayer player;
     private Context context;
     private RxBus bus;
-    private boolean firstTimeInstantiate = false;
+    private boolean isChangeSong = false;
+    private boolean isAppKilled;
 
     //current playlist
     @Nullable
@@ -98,18 +100,30 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
     private SharedPreferences lastPlayedSongPreferences;
     private boolean isShuffle = false;
     private boolean isRepeat = false;
-    private long currentPlaybackPosition = 0;
+    private long currentPlaybackPosition;
 
-    /**DEFAUTL CONSTRUCTOR to initialize SimpleExoPlayer**/
+    /**
+     * DEFAUTL CONSTRUCTOR to initialize SimpleExoPlayer
+     **/
     private SongPlaybackManager() {
-        firstTimeInstantiate = true;
         //init bus
         bus = RxBus.getInstance();
 
         //init context
         context = MusicPlayerApp.getAppContext();
 
-        //init player//constructor
+
+        //create SimpleExoPlayer
+        player = createPlayer(this.context);
+
+        //add listener to SimpleExoPlayer
+        player.addListener(this);
+
+    }
+
+
+    public void initUI() {
+
         this.lastPlayedSongPreferences = this.context.getSharedPreferences(this.context.getPackageName(), Context.MODE_PRIVATE);
 
         Gson gson = new Gson();
@@ -136,26 +150,22 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             }
         }
 
-        //setOriginalList for later use
-        setOriginalList(defaultList);
 
-        //set the current displayed list
-        saveCurrentPlayList(currentList);
+
 
         //Retrieve data from sharedpreferences
         lastPlayedSongIndex = lastPlayedSongPreferences.getInt(LAST_PLAYED_SONG_INDEX_TAG, 0);
         isShuffle = lastPlayedSongPreferences.getBoolean(CURRENT_SHUFFLE_MODE_TAG, false);
         isRepeat = lastPlayedSongPreferences.getBoolean(CURRENT_REPEAT_MODE_TAG, false);
+
         currentPlaybackPosition = lastPlayedSongPreferences.getLong(CURRENT_PLAYBACK_POSITION, 0);
+        isAppKilled = lastPlayedSongPreferences.getBoolean(KILL_APP_TAG, false);
 
-        Log.i("GODZILLA", "INITIAL STATE: currentList = " + currentList + " // lastPlayedSongIndex = " + lastPlayedSongIndex + " // isShuffle = " + isShuffle + " // isRepeat = " + isRepeat + " // currentPlaybackPosition = " + currentPlaybackPosition);
-
-
-        //create SimpleExoPlayer
-        player = createPlayer(this.context);
+        Log.i("KHIEM", "isPlaying = " + isPlaying() + " - playWhenReady = " + player.getPlayWhenReady());
 
         //prepareSource for player (lastPlayedSong)
         prepareSource(lastPlayedSongIndex);
+
 
         //set shuffle icon
         if (isShuffle) {
@@ -170,15 +180,54 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         } else {
             bus.send(new EventRepeatOff());
         }
-
-        //add listener to SimpleExoPlayer
-        player.addListener(this);
-
-        firstTimeInstantiate = false;
     }
 
 
-    /**SINGLETON getInstance()**/
+    public void prepareSource(int lastPlayedSongIndex) {
+        this.lastPlayedSongIndex = lastPlayedSongIndex;
+        SongItem currentSongItem = currentList.get(this.lastPlayedSongIndex);
+
+        //event bus update mini playback control UI in home
+        bus.send(new EventUpdateMiniPlaybackUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
+
+        //event bus update main player UI for next song
+        bus.send(new EventUpdatePlayerUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
+
+        //put Parcelable extra and sendBroadcast
+        Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
+        context.sendBroadcast(notificationUpdateUIIntent);
+
+        MediaSource currentMediaSource = new ExtractorMediaSource.Factory(dataSourceFactory)
+                .createMediaSource(Uri.parse(currentSongItem.getSong().getSongUri()));
+
+        if (isAppKilled) {
+            isAppKilled = false;
+            if (isPlaying()) {
+                bus.send(new EventIsPlaying());
+            } else {
+                bus.send(new EventIsPaused());
+            }
+
+        } else {
+            player.prepare(currentMediaSource, false, false);
+        }
+
+        Log.i("KHIEM", "open app: index = " + this.lastPlayedSongIndex + " - currentPlaybackPosition = " + player.getCurrentPosition() + " - isAppKilled = " + isAppKilled);
+        if (isChangeSong) {
+            player.seekToDefaultPosition();
+        } else {
+            player.seekTo(player.getCurrentPosition());
+
+        }
+
+
+
+    }
+
+
+    /**
+     * SINGLETON getInstance()
+     **/
     public static SongPlaybackManager getSongPlaybackManagerInstance() {
         if (manager == null) {
             manager = new SongPlaybackManager();
@@ -236,37 +285,6 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
     }
 
 
-    public void prepareSource(int lastPlayedSongIndex) {
-        if (firstTimeInstantiate) {
-            player.seekTo(currentPlaybackPosition);
-        } else {
-            player.seekToDefaultPosition();
-        }
-
-        this.lastPlayedSongIndex = lastPlayedSongIndex;
-
-        SongItem currentSongItem = currentList.get(this.lastPlayedSongIndex);
-
-        Log.i("GODZILLA", "prepareSource: songName = " + currentSongItem.getSong().getSongTitle() + " // artist = " + currentSongItem.getSong().getArtistName());
-        //event bus update mini playback control UI in home
-        bus.send(new EventUpdateMiniPlaybackUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
-
-        //event bus update main player UI for next song
-        bus.send(new EventUpdatePlayerUI(currentSongItem, (int)currentPlaybackPosition, this.lastPlayedSongIndex));
-
-        //put Parcelable extra and sendBroadcast
-        Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
-        context.sendBroadcast(notificationUpdateUIIntent);
-
-        MediaSource currentMediaSource = new ExtractorMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(Uri.parse(currentSongItem.getSong().getSongUri()));
-        player.prepare(currentMediaSource, true, false);
-
-        //seekTo
-
-
-    }
-
     /**
      * PLAY
      **/
@@ -306,11 +324,12 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             case Player.STATE_BUFFERING:
                 break;
             case Player.STATE_READY:
-                Log.i("GODZILLA", "playWhenReady = " + playWhenReady);
                 if (playWhenReady) {
+                    Log.i("HARRY", "send EventIsPlaying");
                     bus.send(new EventIsPlaying());
                     context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PLAYING));
                 } else {
+                    Log.i("HARRY", "send EventIsPaused");
                     bus.send(new EventIsPaused());
                     context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PAUSED));
                 }
@@ -452,6 +471,9 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
      * PLAY NEXT SONG FEATURE
      **/
     public void next() {
+        isChangeSong = true;
+        Log.i("WTF", "PRE: isChangeSong = " + isChangeSong);
+        currentPlaybackPosition = 0;
         if (this.lastPlayedSongIndex < currentList.size() - 1) {
             this.lastPlayedSongIndex += 1;
         } else {
@@ -460,12 +482,21 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
 
         prepareSource(this.lastPlayedSongIndex);
 
+        if (isPlaying()) {
+            play();
+        }
+
+        isChangeSong = false;
+        Log.i("WTF", "POST: isChangeSong = " + isChangeSong);
     }
 
     /**
      * PLAY PREVIOUS SONG FEATURE
      **/
     public void previous() {
+        isChangeSong = true;
+        Log.i("WTF", "PRE: isChangeSong = " + isChangeSong);
+        currentPlaybackPosition = 0;
         if (this.lastPlayedSongIndex == 0) {
             player.seekTo(0, 0);
         } else if (this.lastPlayedSongIndex > 0) {
@@ -473,9 +504,18 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             prepareSource(this.lastPlayedSongIndex);
         }
 
+        if (isPlaying()) {
+            play();
+        }
+
+        isChangeSong = false;
+        Log.i("WTF", "POST: isChangeSong = " + isChangeSong);
+
     }
 
-    /**SAVE LAST PLAYED SONG**/
+    /**
+     * SAVE LAST PLAYED SONG
+     **/
     public void saveLastPlayedSong() {
         saveCurrentPlayList(currentList);
 
@@ -493,8 +533,8 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         //current song playback position
         editor.putLong(CURRENT_PLAYBACK_POSITION, player.getCurrentPosition());
 
-        Log.i("GODZILLA", "SaveLastPlayedSong: lastPlayedSongIndex = " + lastPlayedSongIndex + " // currentList = " + currentList);
-        Log.i("GODZILLA", "--------------------------------------------------------------------------------------------------------------------");
+        Log.i("WTF", "SaveLastPlayedSong: songName = " + currentList.get(lastPlayedSongIndex).getSong().getSongTitle() + " - lastPlayedSongIndex = " + lastPlayedSongIndex + " - isPlaying = " + player.getPlayWhenReady());
+        Log.i("WTF", "--------------------------------------------------------------------------------------------------------------------");
 
         editor.apply();
     }
@@ -548,7 +588,7 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
     }
 
     public int getCurrentPlaybackPosition() {
-        return (int)player.getCurrentPosition();
+        return (int) player.getCurrentPosition();
     }
 
     public SongItem getCurrentPlaybackSong() {

@@ -148,6 +148,7 @@
                 android:id="@+id/img_track_background"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
+                android:transitionName="@string/shared_song_cover"
                 app:layout_constraintBottom_toBottomOf="@id/guideline_8"
                 app:layout_constraintEnd_toEndOf="@id/guideline_6"
                 app:layout_constraintStart_toStartOf="@id/guideline_5"
@@ -523,12 +524,6 @@
 
     </android.support.design.widget.CoordinatorLayout>
 
-    <ProgressBar
-        android:id="@+id/retrieving_song_progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginBottom="50dp" />
 
 
 </FrameLayout>

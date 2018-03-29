@@ -38,12 +38,9 @@
         </receiver>
 
 
-        <receiver android:name=".receiver.NotificationReceiver"
-            android:exported="false">
+        <receiver android:name=".receiver.NotificationReceiver">
             <intent-filter>
-                <action android:name="com.example.krot.musicplayer.ACTION_DISMISS_NOTIFICATION" />
-                <action android:name="com.example.krot.musicplayer.ACTION_ENABLE_SWIPEABLE" />
-                <action android:name="com.example.krot.musicplayer.ACTION_DISABLE_SWIPEABLE" />
+                <action android:name="com.example.krot.musicplayer.ACTION_NOTIFICATION_PLAYBACK" />
             </intent-filter>
         </receiver>
         <!-- font -->

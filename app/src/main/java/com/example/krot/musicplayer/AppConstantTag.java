@@ -15,6 +15,8 @@ public class AppConstantTag {
     public static final String CURRENT_REPEAT_MODE_TAG = "CURRENT_REPEAT_MODE_TAG";
     public static final String CURRENT_PLAYBACK_POSITION = "CURRENT_PLAYBACK_POSITION";
     public static final String SELECTED_SONG_INDEX = "SELECTED_SONG_INDEX";
+    public static final String RESET_TAG = "RESET_TAG";
+    public static final String KILL_APP_TAG = "KILL_APP_TAG";
 
     //BROADCAST RECEIVER ACTION
 

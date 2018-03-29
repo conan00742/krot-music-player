@@ -1,6 +1,7 @@
 package com.example.krot.musicplayer.service;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -43,7 +44,7 @@ public class SongPlaybackService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i("GODZILLA", "Service: onCreate");
+        Log.i("HARRY", "Service: onCreate");
         manager = SongPlaybackManager.getSongPlaybackManagerInstance();
 
         //Service Broadcast Receiver
@@ -53,28 +54,27 @@ public class SongPlaybackService extends Service {
         intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PLAYING);
         intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PAUSED);
         registerReceiver(receiver, intentFilter);
+
+        playbackNotification = PlaybackNotificationManager.getInstance().getNotificationBuilder().build();
+        PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, playbackNotification);
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("GODZILLA", "Service: onStartCommand");
+        Log.i("HARRY", "Service: onStartCommand");
         if (intent != null) {
             String action = intent.getAction();
-            Log.i("GODZILLA", "Service: action = " + action);
+            Log.i("HARRY", "Service: action = " + action);
             if (action != null) {
                 if (TextUtils.equals(ACTION_CREATE_NOTIFICATION, action)) {
-                    playbackNotification = PlaybackNotificationManager.getInstance().getNotificationBuilder().build();
-                    PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, playbackNotification);
                     startForeground(PLAYBACK_NOTI_ID, playbackNotification);
                 }
 
-                else if (TextUtils.equals(ACTION_DISMISS_NOTIFICATION, action)) {
-                    Log.i("GODZILLA", "HERE");
-                    stopSelf();
-                }
             }
         }
-        return START_NOT_STICKY;
+
+        return START_STICKY;
     }
 
     @Nullable
@@ -86,14 +86,13 @@ public class SongPlaybackService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("GODZILLA", "-@-@-@-@-@-@-@-@-@-@-@: service DESTROYED");
-        Log.i("GODZILLA", "isAppRunning = " + Helper.isAppRunning(context, "com.example.krot.musicplayer"));
+        Log.i("HARRY", "Service: onDestroy");
+
+        //TODO: update RemoteViews UI using startForeground
+        stopForeground(true);
         unregisterReceiver(receiver);
         manager.saveLastPlayedSong();
-//        if (!Helper.isAppRunning(context, "com.example.krot.musicplayer")) {
-//            Log.i("GODZILLA", "release player luôn");
-//            manager.releasePlayer();
-//        }
+//        stopSelf();
     }
 
 
@@ -108,13 +107,11 @@ public class SongPlaybackService extends Service {
                     if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
                         PlaybackNotificationManager.getInstance().updatePlaybackNotificationUI();
                     } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PLAYING, action)) {
-                        Log.i("GODZILLA", "ACTION_UPDATE_NOTIFICATION_IS_PLAYING: đang play");
+                        Log.i("HARRY", "SERVICE: received ACTION_UPDATE_NOTIFICATION_IS_PLAYING");
                         PlaybackNotificationManager.getInstance().updateNotificationIsPlayingIcon();
                     } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PAUSED, action)) {
-                        Log.i("GODZILLA", "ACTION_UPDATE_NOTIFICATION_IS_PAUSED: đéo play");
+                        Log.i("HARRY", "SERVICE: received ACTION_UPDATE_NOTIFICATION_IS_PAUSED");
                         PlaybackNotificationManager.getInstance().updateNotificationIsPausedIcon();
-                        stopForeground(false);
-                        PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, PlaybackNotificationManager.getInstance().getNotificationBuilder().build());
                     }
                 }
             }

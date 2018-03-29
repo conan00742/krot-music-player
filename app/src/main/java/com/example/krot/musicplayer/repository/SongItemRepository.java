@@ -79,7 +79,6 @@ public class SongItemRepository {
         try {
             hours = (duration / 3600000);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return out;
         }

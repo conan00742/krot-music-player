@@ -13,7 +13,9 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.TextView;
@@ -35,8 +38,10 @@ import com.example.krot.musicplayer.event_bus.EventUpdateMiniPlaybackUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
+import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.example.krot.musicplayer.presenter.SongItemContract;
 import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
+import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.gson.Gson;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -55,6 +60,7 @@ import io.reactivex.functions.Consumer;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_PLAYBACK;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_SAVE_CURRENT_PLAYLIST;
 import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
+import static com.example.krot.musicplayer.AppConstantTag.KILL_APP_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
 import static com.example.krot.musicplayer.AppConstantTag.PERMISSION_CODE;
 import static com.example.krot.musicplayer.AppConstantTag.REQUEST_PERMISSION_SETTING;
@@ -67,7 +73,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     @BindView(R.id.loading_progress)
     ProgressBar loadingProgress;
 
-    @BindView(R.id.mini_song_cover)
+    @BindView(R.id.img_track_background)
     ImageView miniSongCover;
 
     @BindView(R.id.mini_song_title)
@@ -81,7 +87,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
 
     @OnClick(R.id.ic_mini_previous)
     public void playPreviousSong() {
-        SongPlaybackManager.getSongPlaybackManagerInstance().previous();
+        manager.previous();
     }
 
     @BindView(R.id.ic_mini_playback)
@@ -97,12 +103,33 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
 
     @OnClick(R.id.ic_mini_next)
     public void playNextSong() {
-        SongPlaybackManager.getSongPlaybackManagerInstance().next();
+        manager.next();
+    }
+
+    @BindView(R.id.mini_song_container)
+    LinearLayout miniSongContainer;
+
+    @OnClick(R.id.mini_song_container)
+    public void showCurrentPlayingSong() {
+        manager.saveLastPlayedSong();
+        Intent showCurrentPlayingSongIntent = new Intent(HomeActivity.this, PlayListActivity.class);
+        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(HomeActivity.this, miniSongCover, getResources().getString(R.string.shared_song_cover));
+        startActivity(showCurrentPlayingSongIntent, optionsCompat.toBundle());
+    }
+
+    @BindView(R.id.fab_shuffle_all)
+    FloatingActionButton fabShuffleAll;
+
+    @OnClick(R.id.fab_shuffle_all)
+    public void doShuffleAll() {
+        //TODO: handle shuffle all
     }
 
     private SongItemContract.SongItemPresenter songItemPresenter;
     private SharedPreferences defaultPreferences;
     private Disposable disposable;
+    private SongPlaybackManager manager;
+    private boolean isGranted = false;
 
 
     @Override
@@ -110,6 +137,7 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         ButterKnife.bind(this);
+
         defaultPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
         setSupportActionBar(toolbarHome);
         getSupportActionBar().setTitle("Music");
@@ -120,12 +148,12 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
         //request permission
         String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
         if (!hasPermissions(this, permissions)) {
-            Log.i("GODZILLA", ">>>>>>>>>>>>>BEFORE: NOT GRANTED");
+            Log.i("KHIEM", "not granted");
             displayDefaultUI();
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_CODE);
         } else {
-            Log.i("GODZILLA", ">>>>>>>>>>>>>BEFORE: GRANTED");
-            songItemPresenter.loadData();
+            Log.i("KHIEM", "granted");
+            isGranted = true;
         }
 
     }
@@ -148,7 +176,6 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
             case PERMISSION_CODE:
                 if (grantResults.length > 0) {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.i("GODZILLA", ">>>>>>>>>>>>>AFTER: GRANTED");
                         songItemPresenter.loadData();
                     } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                         boolean shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -200,36 +227,63 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     @Override
     protected void onStart() {
         super.onStart();
+
+        Log.i("KHIEM", "HomeActivity: onStart");
         disposable = RxBus.getInstance().toObserverable().subscribe(new Consumer<Object>() {
             @Override
             public void accept(Object o) throws Exception {
+                Log.i("KHIEM", "HomeActivity: start observing");
                 if (o instanceof EventUpdateMiniPlaybackUI) {
                     EventUpdateMiniPlaybackUI eventUpdateMiniPlaybackUI = (EventUpdateMiniPlaybackUI) o;
-                    Log.i("GODZILLA", "EventUpdateMiniPlaybackUI: songName = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getSongTitle() + " // artist = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getArtistName());
+                    Log.i("KHIEM", "EventUpdateMiniPlaybackUI: songName = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getSongTitle() + " // artist = " + eventUpdateMiniPlaybackUI.getCurrentSongItem().getSong().getArtistName());
                     updateMiniPlaybackControlUI(eventUpdateMiniPlaybackUI.getCurrentSongItem());
                 }
 
                 else if (o instanceof EventIsPlaying) {
+                    Log.i("KHIEM", "received EventIsPlaying");
                     icMiniPlayback.setImageDrawable(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_mini_pause));
                 }
 
                 else if (o instanceof EventIsPaused) {
+                    Log.i("KHIEM", "received EventIsPaused");
                     icMiniPlayback.setImageDrawable(ContextCompat.getDrawable(HomeActivity.this, R.drawable.ic_mini_play));
                 }
             }
         });
 
+        if (isGranted) {
+            Log.i("KHIEM", "loadData");
+            songItemPresenter.loadData();
+        }
+
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        disposable.dispose();
         SharedPreferences.Editor countEditor = defaultPreferences.edit();
         countEditor.putBoolean(FIRST_TIME_INSTALL, false);
         countEditor.apply();
         sendBroadcast(new Intent(ACTION_SAVE_CURRENT_PLAYLIST));
-        disposable.dispose();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //mark
+        SharedPreferences.Editor editor = defaultPreferences.edit();
+        editor.putBoolean(KILL_APP_TAG, true);
+        editor.apply();
+        Log.i("KHIEM", "kill app: currentPlaybackPosition = " + manager.getPlayer().getCurrentPosition());
+        Log.i("KHIEM", "================================================================================");
 
     }
 
@@ -327,7 +381,6 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
 
     @Override
     public void setOriginalList(List<Item> originalList) {
-        Log.i("GODZILLA", "SetOriginalList");
         List<SongItem> originalSongItemList = new ArrayList<>();
         for (int i = 0; i < originalList.size(); i++) {
             Item currentItem = originalList.get(i);
@@ -344,15 +397,9 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
         editor.putString(ORIGINAL_PLAYLIST, originalPlayListInString);
         editor.apply();
 
-        if (SongPlaybackManager.getSongPlaybackManagerInstance().getPlayer() != null) {
-            Log.i("GODZILLA", "************** player = " + SongPlaybackManager.getSongPlaybackManagerInstance().getPlayer());
-        } else {
-            Log.i("GODZILLA", "************** player = null");
-        }
-
-
-        //TODO: phải tạo lại manager
-        SongPlaybackManager.getSongPlaybackManagerInstance().setOriginalList(originalSongItemList);
+        manager = SongPlaybackManager.getSongPlaybackManagerInstance();
+        manager.initUI();
+        manager.setOriginalList(originalSongItemList);
     }
 
 }
