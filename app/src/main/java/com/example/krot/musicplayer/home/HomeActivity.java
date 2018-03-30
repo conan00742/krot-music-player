@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
@@ -50,6 +51,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -66,6 +68,14 @@ import static com.example.krot.musicplayer.AppConstantTag.PERMISSION_CODE;
 import static com.example.krot.musicplayer.AppConstantTag.REQUEST_PERMISSION_SETTING;
 
 public class HomeActivity extends AppCompatActivity implements SongItemContract.SongItemView {
+
+    @Nullable
+    private List<Item> shuffledList;
+    private SongItemContract.SongItemPresenter songItemPresenter;
+    private SharedPreferences defaultPreferences;
+    private Disposable disposable;
+    private SongPlaybackManager manager;
+    private boolean isGranted = false;
 
     @BindView(R.id.toolbar_home)
     Toolbar toolbarHome;
@@ -112,6 +122,10 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     @OnClick(R.id.mini_song_container)
     public void showCurrentPlayingSong() {
         manager.saveLastPlayedSong();
+        Log.i("TUSKAR", "isPlaying = " + manager.isPlaying() + "/" + manager.getPlayer().getPlayWhenReady() + " - isShuffle = " + manager.isShuffleOn() + "/" + manager.getPlayer().getShuffleModeEnabled());
+        for (int i = 0; i < manager.getCurrentList().size(); i++) {
+            Log.i("TUSKAR", "songName = " + manager.getCurrentList().get(i).getSong().getSongTitle());
+        }
         Intent showCurrentPlayingSongIntent = new Intent(HomeActivity.this, PlayListActivity.class);
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(HomeActivity.this, miniSongCover, getResources().getString(R.string.shared_song_cover));
         startActivity(showCurrentPlayingSongIntent, optionsCompat.toBundle());
@@ -123,13 +137,43 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     @OnClick(R.id.fab_shuffle_all)
     public void doShuffleAll() {
         //TODO: handle shuffle all
+        List<Item> originalList = SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList();
+
+        if (shuffledList == null || shuffledList.isEmpty()) {
+            shuffledList = randomShuffle(originalList);
+        } else {
+            shuffledList = randomShuffle(shuffledList);
+        }
+
+        SongPlaybackManager.getSongPlaybackManagerInstance().setCurrentList(shuffledList);
+        SongPlaybackManager.getSongPlaybackManagerInstance().saveLastPlayedSong();
+        SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOn();
+        if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
+            SongPlaybackManager.getSongPlaybackManagerInstance().pause();
+        }
+
+        SongPlaybackManager.getSongPlaybackManagerInstance().prepareSource(0);
+
+        //2. Play first song of the shuffled list
+        SongPlaybackManager.getSongPlaybackManagerInstance().play();
     }
 
-    private SongItemContract.SongItemPresenter songItemPresenter;
-    private SharedPreferences defaultPreferences;
-    private Disposable disposable;
-    private SongPlaybackManager manager;
-    private boolean isGranted = false;
+
+    //shuffle playlist
+    private List<Item> randomShuffle(List<Item> currentPlayList) {
+        List<Item> newList = new ArrayList<>();
+        int index;
+        Item tempItem;
+        Random random = new Random();
+        for (int i = currentPlayList.size() - 1; i > 0; i--) {
+            index = random.nextInt(i + 1);
+            tempItem = currentPlayList.get(index);
+            newList.add(tempItem);
+        }
+
+        return newList;
+    }
+
 
 
     @Override

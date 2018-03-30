@@ -151,9 +151,11 @@ public class PlaybackNotificationManager {
             songPlaybackRemoteViews.setTextViewText(R.id.tv_noti_artist_name, "???");
         }
 
+
     }
 
     public void updateNotificationIsPlayingIcon() {
+        Log.i("VISAGE", "doUpdatePlaying");
         songPlaybackRemoteViews.setImageViewResource(R.id.ic_noti_play, R.drawable.ic_notification_pause);
         if (manager != null) {
             manager.getNotificationManager().notify(PLAYBACK_NOTI_ID, builder.build());
@@ -161,10 +163,11 @@ public class PlaybackNotificationManager {
     }
 
     public void updateNotificationIsPausedIcon() {
+        Log.i("VISAGE", "doUpdatePaused");
         songPlaybackRemoteViews.setImageViewResource(R.id.ic_noti_play, R.drawable.ic_notification_play);
-//        if (manager != null) {
-//            manager.getNotificationManager().notify(PLAYBACK_NOTI_ID, builder.build());
-//        }
+        if (manager != null) {
+            manager.getNotificationManager().notify(PLAYBACK_NOTI_ID, builder.build());
+        }
     }
 
     public NotificationManager getNotificationManager() {

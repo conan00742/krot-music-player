@@ -202,7 +202,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i("QUEENOFPAIN", PREFIX + ": onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_playback_song);
         ButterKnife.bind(this);
@@ -214,19 +213,15 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         setupAdapter();
 
 
-
-
     }
 
     @Override
     protected void onStart() {
-        Log.i("QUEENOFPAIN", PREFIX + ": onStart");
         super.onStart();
         disposable = RxBus.getInstance().toObserverable().subscribe(new Consumer<Object>() {
             @Override
             public void accept(Object o) throws Exception {
                 //Khi user click vào 1 bài nhạc trong list
-                Log.i("QUEENOFPAIN", "observing: object = " + o);
                 if (o instanceof EventPlaySong) {
                     behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     //Kiểm tra xem có shuffle hay ko
@@ -336,7 +331,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     @Override
     protected void onResume() {
-        Log.i("QUEENOFPAIN", PREFIX + ": onResume");
         super.onResume();
     }
 
@@ -378,7 +372,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         songItemAdapter = new SongItemAdapter(this);
         songItemAdapter.setItemList(SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList());
 
-        Log.i("QUEENOFPAIN", "setUpAdapter: itemList = " + songItemAdapter.getCurrentItemList());
         musicRecyclerView.setAdapter(songItemAdapter);
         LinearLayoutManager manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         musicRecyclerView.setLayoutManager(manager);
@@ -486,8 +479,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
      **/
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        Log.i("KHIEM", "onProgressChanged");
-
         if (fromUser) {
             currentSongPosition = seekBar.getProgress();
 
@@ -513,12 +504,10 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        Log.i("KHIEM", "onStartTrackingTouch");
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        Log.i("KHIEM", "onStopTrackingTouch");
         stopSeek();
         SongPlaybackManager.getSongPlaybackManagerInstance().seek(seekBar.getProgress());
 

@@ -15,7 +15,11 @@ import static com.example.krot.musicplayer.AppConstantTag.ACTION_DISABLE_SWIPEAB
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_DISMISS_NOTIFICATION;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_ENABLE_SWIPEABLE;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_NOTIFICATION_PLAYBACK;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PAUSED;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PLAYING;
+import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_UI;
 import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTIFICATION_ID;
+import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTI_ID;
 
 /**
  * Created by Krot on 3/27/18.
@@ -30,14 +34,23 @@ public class NotificationReceiver extends BroadcastReceiver {
             String action = intent.getAction();
             if (action != null) {
                 if (TextUtils.equals(ACTION_NOTIFICATION_PLAYBACK, action)) {
+                    Log.i("VISAGE", "ACTION_NOTIFICATION_PLAYBACK: isPlaying = " + SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying());
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
                         SongPlaybackManager.getSongPlaybackManagerInstance().pause();
-                        Log.i("HARRY", "NotificationReceiver: pause");
+                        PlaybackNotificationManager.getInstance().updateNotificationIsPausedIcon();
                     } else {
                         SongPlaybackManager.getSongPlaybackManagerInstance().play();
-                        Log.i("HARRY", "NotificationReceiver: play");
+                        PlaybackNotificationManager.getInstance().updateNotificationIsPlayingIcon();
                     }
                 }
+
+                else if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
+                    PlaybackNotificationManager.getInstance().updatePlaybackNotificationUI();
+
+                    //TODO: có nên notify notification ở đây ko?
+                    PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, PlaybackNotificationManager.getInstance().getNotificationBuilder().build());
+                }
+
             }
         }
     }

@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import com.example.krot.musicplayer.Helper;
@@ -36,45 +37,32 @@ public class SongPlaybackService extends Service {
     @NonNull
     private SongPlaybackManager manager;
 
-    private PlaybackServiceReceiver receiver;
-
-    private Notification playbackNotification;
-
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i("HARRY", "Service: onCreate");
+        Log.i("VISAGE", "Service: onCreate");
         manager = SongPlaybackManager.getSongPlaybackManagerInstance();
-
-        //Service Broadcast Receiver
-        receiver = new PlaybackServiceReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ACTION_UPDATE_UI);
-        intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PLAYING);
-        intentFilter.addAction(ACTION_UPDATE_NOTIFICATION_IS_PAUSED);
-        registerReceiver(receiver, intentFilter);
-
-        playbackNotification = PlaybackNotificationManager.getInstance().getNotificationBuilder().build();
-        PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, playbackNotification);
 
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i("HARRY", "Service: onStartCommand");
+        Log.i("VISAGE", "Service: onStartCommand");
         if (intent != null) {
             String action = intent.getAction();
-            Log.i("HARRY", "Service: action = " + action);
             if (action != null) {
                 if (TextUtils.equals(ACTION_CREATE_NOTIFICATION, action)) {
-                    startForeground(PLAYBACK_NOTI_ID, playbackNotification);
+                    Log.i("VISAGE", "ACTION_CREATE_NOTIFICATION");
+                    NotificationCompat.Builder builder = PlaybackNotificationManager.getInstance().getNotificationBuilder();
+                    startForeground(PLAYBACK_NOTI_ID, builder.build());
+
                 }
 
             }
         }
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Nullable
@@ -83,39 +71,15 @@ public class SongPlaybackService extends Service {
         return null;
     }
 
+
     @Override
     public void onDestroy() {
+        Log.i("VISAGE", "Service: onDestroy");
+        Log.i("VISAGE", "________________________________________");
         super.onDestroy();
-        Log.i("HARRY", "Service: onDestroy");
-
         //TODO: update RemoteViews UI using startForeground
-        stopForeground(true);
-        unregisterReceiver(receiver);
         manager.saveLastPlayedSong();
-//        stopSelf();
-    }
 
-
-    /**Playback Service Broadcast Receiver**/
-    private class PlaybackServiceReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent != null) {
-                String action = intent.getAction();
-                if (action != null) {
-                    if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
-                        PlaybackNotificationManager.getInstance().updatePlaybackNotificationUI();
-                    } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PLAYING, action)) {
-                        Log.i("HARRY", "SERVICE: received ACTION_UPDATE_NOTIFICATION_IS_PLAYING");
-                        PlaybackNotificationManager.getInstance().updateNotificationIsPlayingIcon();
-                    } else if (TextUtils.equals(ACTION_UPDATE_NOTIFICATION_IS_PAUSED, action)) {
-                        Log.i("HARRY", "SERVICE: received ACTION_UPDATE_NOTIFICATION_IS_PAUSED");
-                        PlaybackNotificationManager.getInstance().updateNotificationIsPausedIcon();
-                    }
-                }
-            }
-        }
     }
 
 

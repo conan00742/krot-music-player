@@ -27,6 +27,7 @@ import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
+import com.example.krot.musicplayer.notification.PlaybackNotificationManager;
 import com.example.krot.musicplayer.playlist.PlayListActivity;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
@@ -70,6 +71,7 @@ import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
 import static com.example.krot.musicplayer.AppConstantTag.KILL_APP_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.LAST_PLAYED_SONG_INDEX_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
+import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTI_ID;
 import static com.example.krot.musicplayer.AppConstantTag.RESET_TAG;
 
 /**
@@ -193,6 +195,7 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         //event bus update main player UI for next song
         bus.send(new EventUpdatePlayerUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
 
+        //TODO: chưa update UI của notification
         //put Parcelable extra and sendBroadcast
         Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
         context.sendBroadcast(notificationUpdateUIIntent);
@@ -234,6 +237,12 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         }
 
         return manager;
+    }
+
+
+    @Nullable
+    public List<SongItem> getCurrentList() {
+        return currentList;
     }
 
 
@@ -327,11 +336,9 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
                 if (playWhenReady) {
                     Log.i("HARRY", "send EventIsPlaying");
                     bus.send(new EventIsPlaying());
-                    context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PLAYING));
                 } else {
                     Log.i("HARRY", "send EventIsPaused");
                     bus.send(new EventIsPaused());
-                    context.sendBroadcast(new Intent(ACTION_UPDATE_NOTIFICATION_IS_PAUSED));
                 }
                 break;
             case Player.STATE_ENDED:
