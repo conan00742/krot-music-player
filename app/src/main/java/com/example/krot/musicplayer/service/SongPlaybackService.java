@@ -1,6 +1,5 @@
 package com.example.krot.musicplayer.service;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -13,16 +12,11 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
-import com.example.krot.musicplayer.Helper;
+
 import com.example.krot.musicplayer.SongPlaybackManager;
 import com.example.krot.musicplayer.notification.PlaybackNotificationManager;
 
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_CREATE_NOTIFICATION;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_DISABLE_SWIPEABLE;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_DISMISS_NOTIFICATION;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_ENABLE_SWIPEABLE;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PAUSED;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PLAYING;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_UI;
 import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTI_ID;
 
@@ -37,6 +31,23 @@ public class SongPlaybackService extends Service {
     @NonNull
     private SongPlaybackManager manager;
 
+    private BroadcastReceiver updateUIReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i("LINA", "Update Noti UI: " + intent.getAction());
+            String action = intent.getAction();
+            if (action != null) {
+                if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
+                    PlaybackNotificationManager.getInstance().updatePlaybackNotificationUI();
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    if (notificationManager != null) {
+                        notificationManager.notify(PLAYBACK_NOTI_ID, PlaybackNotificationManager.getInstance().getNotificationBuilder().build());
+                    }
+                }
+            }
+        }
+    };
+
 
     @Override
     public void onCreate() {
@@ -44,7 +55,11 @@ public class SongPlaybackService extends Service {
         Log.i("VISAGE", "Service: onCreate");
         manager = SongPlaybackManager.getSongPlaybackManagerInstance();
 
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_UPDATE_UI);
+        registerReceiver(updateUIReceiver, filter);
     }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -56,14 +71,14 @@ public class SongPlaybackService extends Service {
                     Log.i("VISAGE", "ACTION_CREATE_NOTIFICATION");
                     NotificationCompat.Builder builder = PlaybackNotificationManager.getInstance().getNotificationBuilder();
                     startForeground(PLAYBACK_NOTI_ID, builder.build());
-
                 }
 
             }
         }
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
+
 
     @Nullable
     @Override
@@ -79,7 +94,7 @@ public class SongPlaybackService extends Service {
         super.onDestroy();
         //TODO: update RemoteViews UI using startForeground
         manager.saveLastPlayedSong();
-
+        unregisterReceiver(updateUIReceiver);
     }
 
 

@@ -1,5 +1,6 @@
 package com.example.krot.musicplayer.notification;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -44,6 +45,7 @@ public class PlaybackNotificationManager {
 
         songPlaybackRemoteViews = new RemoteViews(MusicPlayerApp.getAppContext().getPackageName(), R.layout.player_notification);
         notificationManager = (NotificationManager) MusicPlayerApp.getAppContext().getSystemService(Context.NOTIFICATION_SERVICE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String channelId = MusicPlayerApp.getAppContext().getResources().getString(R.string.playback_channel_id);
             String channelName = MusicPlayerApp.getAppContext().getResources().getString(R.string.playback_channel_name);
@@ -53,6 +55,7 @@ public class PlaybackNotificationManager {
             notificationChannel.setDescription(channelDescription);
             notificationChannel.enableLights(true);
             notificationChannel.setLightColor(Color.GREEN);
+            notificationChannel.setLockscreenVisibility(NotificationCompat.VISIBILITY_PUBLIC);
             notificationManager.createNotificationChannel(notificationChannel);
             builder = new NotificationCompat.Builder(MusicPlayerApp.getAppContext(), channelId);
         } else {
@@ -60,12 +63,6 @@ public class PlaybackNotificationManager {
         }
 
 
-//        Intent actionCancelNotification = new Intent(MusicPlayerApp.getAppContext(), SongPlaybackService.class);
-//        actionCancelNotification.setAction(ACTION_DISMISS_NOTIFICATION);
-//        actionCancelNotification.putExtra(PLAYBACK_NOTIFICATION_ID, PLAYBACK_NOTI_ID);
-//
-//        PendingIntent dismissNotiPendingIntent = PendingIntent.getService(MusicPlayerApp.getAppContext(),
-//                0, actionCancelNotification, PendingIntent.FLAG_CANCEL_CURRENT);
 
         //NotificationCompat.Builder
         builder.setCustomBigContentView(getRemoteView())
@@ -74,7 +71,6 @@ public class PlaybackNotificationManager {
                 .setLargeIcon(BitmapFactory.decodeResource(MusicPlayerApp.getAppContext().getResources(), R.drawable.ic_playback_notification_icon))
                 .setContentText("this is content text")
                 .setSubText("sub text");
-//                .setDeleteIntent(dismissNotiPendingIntent);
 
 
         //TODO: setContentIntent(PendingIntent intent) ===> khi click vào notification thì mở PlayListActivity
@@ -103,6 +99,7 @@ public class PlaybackNotificationManager {
         updatePlaybackNotificationUI();
 
         Intent actionPlaybackIntent = new Intent(ACTION_NOTIFICATION_PLAYBACK);
+
         Intent actionNextIntent = new Intent(ACTION_PLAY_NEXT_SONG);
         Intent actionPreviousIntent = new Intent(ACTION_PLAY_PREVIOUS_SONG);
 
@@ -122,6 +119,7 @@ public class PlaybackNotificationManager {
 
     public void updatePlaybackNotificationUI() {
         SongItem currentPlaybackSongItem = SongPlaybackManager.getSongPlaybackManagerInstance().getCurrentPlaybackSong();
+
         if (currentPlaybackSongItem.getSong() != null) {
             String songCover = null;
             Cursor coverCursor = MusicPlayerApp.getAppContext().getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,

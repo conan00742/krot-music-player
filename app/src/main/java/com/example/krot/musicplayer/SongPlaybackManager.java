@@ -17,18 +17,19 @@ import android.util.Log;
 import com.example.krot.musicplayer.event_bus.EventEndSong;
 import com.example.krot.musicplayer.event_bus.EventIsPaused;
 import com.example.krot.musicplayer.event_bus.EventIsPlaying;
+import com.example.krot.musicplayer.event_bus.EventPlaySelectedQueueSong;
 import com.example.krot.musicplayer.event_bus.EventRepeatOff;
 import com.example.krot.musicplayer.event_bus.EventRepeatOn;
 import com.example.krot.musicplayer.event_bus.EventShuffleOff;
 import com.example.krot.musicplayer.event_bus.EventShuffleOn;
 import com.example.krot.musicplayer.event_bus.EventUpdateMiniPlaybackUI;
 import com.example.krot.musicplayer.event_bus.EventUpdatePlayerUI;
+import com.example.krot.musicplayer.event_bus.EventUpdateQueueItemPlaybackIcon;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.notification.PlaybackNotificationManager;
-import com.example.krot.musicplayer.playlist.PlayListActivity;
+import com.example.krot.musicplayer.viewholder.QueueViewHolder;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
@@ -54,16 +55,9 @@ import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_DISABLE_SWIPEABLE;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_ENABLE_SWIPEABLE;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PAUSED;
-import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_NOTIFICATION_IS_PLAYING;
 import static com.example.krot.musicplayer.AppConstantTag.ACTION_UPDATE_UI;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYBACK_POSITION;
-import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYING_SONG;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_PLAYLIST_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_REPEAT_MODE_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.CURRENT_SHUFFLE_MODE_TAG;
@@ -71,8 +65,6 @@ import static com.example.krot.musicplayer.AppConstantTag.FIRST_TIME_INSTALL;
 import static com.example.krot.musicplayer.AppConstantTag.KILL_APP_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.LAST_PLAYED_SONG_INDEX_TAG;
 import static com.example.krot.musicplayer.AppConstantTag.ORIGINAL_PLAYLIST;
-import static com.example.krot.musicplayer.AppConstantTag.PLAYBACK_NOTI_ID;
-import static com.example.krot.musicplayer.AppConstantTag.RESET_TAG;
 
 /**
  * Created by Krot on 2/9/18.
@@ -195,7 +187,6 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         //event bus update main player UI for next song
         bus.send(new EventUpdatePlayerUI(currentSongItem, (int) currentPlaybackPosition, this.lastPlayedSongIndex));
 
-        //TODO: chưa update UI của notification
         //put Parcelable extra and sendBroadcast
         Intent notificationUpdateUIIntent = new Intent(ACTION_UPDATE_UI);
         context.sendBroadcast(notificationUpdateUIIntent);
@@ -222,8 +213,6 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             player.seekTo(player.getCurrentPosition());
 
         }
-
-
 
     }
 
@@ -277,8 +266,17 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         return originalItemList;
     }
 
+    public int getLastPlayedSongIndex(){
+        return this.lastPlayedSongIndex;
+    }
+
+
     public void setLastPlayedSongIndex(int lastPlayedSongIndex) {
         this.lastPlayedSongIndex = lastPlayedSongIndex;
+    }
+
+    public void setChangeSong(boolean changeSong) {
+        isChangeSong = changeSong;
     }
 
     public SimpleExoPlayer createPlayer(Context context) {
@@ -334,10 +332,11 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
                 break;
             case Player.STATE_READY:
                 if (playWhenReady) {
-                    Log.i("HARRY", "send EventIsPlaying");
                     bus.send(new EventIsPlaying());
+                    //TODO: update queue playlist icon to play (2 lines)
+//                    bus.send(new EventUpdateQueueItemPlaybackIcon());
                 } else {
-                    Log.i("HARRY", "send EventIsPaused");
+                    //TODO: update queue playlist icon to pause (triangle)
                     bus.send(new EventIsPaused());
                 }
                 break;
@@ -487,6 +486,8 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             this.lastPlayedSongIndex = 0;
         }
 
+        bus.send(new EventPlaySelectedQueueSong(lastPlayedSongIndex));
+
         prepareSource(this.lastPlayedSongIndex);
 
         if (isPlaying()) {
@@ -510,6 +511,8 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
             this.lastPlayedSongIndex -= 1;
             prepareSource(this.lastPlayedSongIndex);
         }
+
+        bus.send(new EventPlaySelectedQueueSong(lastPlayedSongIndex));
 
         if (isPlaying()) {
             play();
@@ -577,16 +580,6 @@ public class SongPlaybackManager implements Player.EventListener, AudioManager.O
         }
 
         return newList;
-    }
-
-
-    public int getState() {
-        return player.getPlaybackState();
-    }
-
-
-    public boolean getReady() {
-        return player.getPlayWhenReady();
     }
 
 

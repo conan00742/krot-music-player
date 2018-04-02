@@ -34,7 +34,6 @@ public class NotificationReceiver extends BroadcastReceiver {
             String action = intent.getAction();
             if (action != null) {
                 if (TextUtils.equals(ACTION_NOTIFICATION_PLAYBACK, action)) {
-                    Log.i("VISAGE", "ACTION_NOTIFICATION_PLAYBACK: isPlaying = " + SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying());
                     if (SongPlaybackManager.getSongPlaybackManagerInstance().isPlaying()) {
                         SongPlaybackManager.getSongPlaybackManagerInstance().pause();
                         PlaybackNotificationManager.getInstance().updateNotificationIsPausedIcon();
@@ -42,13 +41,6 @@ public class NotificationReceiver extends BroadcastReceiver {
                         SongPlaybackManager.getSongPlaybackManagerInstance().play();
                         PlaybackNotificationManager.getInstance().updateNotificationIsPlayingIcon();
                     }
-                }
-
-                else if (TextUtils.equals(ACTION_UPDATE_UI, action)) {
-                    PlaybackNotificationManager.getInstance().updatePlaybackNotificationUI();
-
-                    //TODO: có nên notify notification ở đây ko?
-                    PlaybackNotificationManager.getInstance().getNotificationManager().notify(PLAYBACK_NOTI_ID, PlaybackNotificationManager.getInstance().getNotificationBuilder().build());
                 }
 
             }

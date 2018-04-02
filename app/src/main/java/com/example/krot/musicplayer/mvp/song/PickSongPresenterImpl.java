@@ -1,11 +1,12 @@
-package com.example.krot.musicplayer.presenter.song;
+package com.example.krot.musicplayer.mvp.song;
 
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.presenter.PickSongContract;
+import com.example.krot.musicplayer.mvp.PickSongContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public class PickSongPresenterImpl implements PickSongContract.PickSongPresenter
                         newList.add(currentItem);
                     }
                 }
+
                 return newList;
             }
 

@@ -1,20 +1,15 @@
-package com.example.krot.musicplayer.presenter.song;
+package com.example.krot.musicplayer.mvp.song;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
 import com.example.krot.musicplayer.home.HomeActivity;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
-import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.playlist.PlayListActivity;
-import com.example.krot.musicplayer.presenter.SongItemContract;
+import com.example.krot.musicplayer.mvp.SongItemContract;
 import com.example.krot.musicplayer.repository.SongItemRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

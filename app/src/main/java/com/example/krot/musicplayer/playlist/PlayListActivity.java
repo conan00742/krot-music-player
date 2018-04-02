@@ -18,7 +18,6 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -42,9 +41,10 @@ import com.example.krot.musicplayer.event_bus.EventUpdatePlayerUI;
 import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.home.HomeActivity;
 import com.example.krot.musicplayer.model.Item;
+import com.example.krot.musicplayer.model.ShuffleAllSongsItem;
 import com.example.krot.musicplayer.model.SongItem;
-import com.example.krot.musicplayer.presenter.PickSongContract;
-import com.example.krot.musicplayer.presenter.song.PickSongPresenterImpl;
+import com.example.krot.musicplayer.mvp.PickSongContract;
+import com.example.krot.musicplayer.mvp.song.PickSongPresenterImpl;
 import com.example.krot.musicplayer.queue.QueuePlayListActivity;
 import com.example.krot.musicplayer.receiver.PlaybackReceiver;
 import com.example.krot.musicplayer.repository.SongItemRepository;
@@ -71,14 +71,19 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     @BindView(R.id.music_list)
     RecyclerView musicRecyclerView;
+
     @BindView(R.id.container)
     View bottomSheetPlayList;
+
     @BindView(R.id.img_track_background)
     ImageView songBackground;
+
     @BindView(R.id.tv_track_name)
     TextView songName;
+
     @BindView(R.id.tv_artist_name)
     TextView artistName;
+
     @BindView(R.id.icon_playback_option)
     ImageView iconViewQueue;
 
@@ -86,77 +91,31 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
     @BindView(R.id.ic_shuffle)
     ImageView icShuffle;
 
-
-
-    @OnClick(R.id.ic_shuffle)
-    public void doToggleShuffle() {
-        if (SongPlaybackManager.getSongPlaybackManagerInstance().isShuffleOn()) {
-            SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOff();
-        } else {
-            SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOn();
-        }
-    }
-
     @BindView(R.id.ic_previous)
     ImageView icPrevious;
-
-    @OnClick(R.id.ic_previous)
-    public void doPlayPreviousSong() {
-        if (counter != null) {
-            counter.cancel();
-        }
-
-        SongPlaybackManager.getSongPlaybackManagerInstance().previous();
-    }
 
     @BindView(R.id.ic_playback)
     ImageView icPlayback;
 
-    @OnClick(R.id.ic_playback)
-    public void doPlayBack() {
-        sendBroadcast(new Intent(ACTION_PLAYBACK));
-    }
-
     @BindView(R.id.ic_next)
     ImageView icNext;
-
-    @OnClick(R.id.ic_next)
-    public void doPlayNextSong() {
-        if (counter != null) {
-            counter.cancel();
-        }
-
-        SongPlaybackManager.getSongPlaybackManagerInstance().next();
-    }
 
     @BindView(R.id.ic_repeat)
     ImageView icRepeat;
 
-    @OnClick(R.id.ic_repeat)
-    public void doToggleRepeatMode() {
-        if (SongPlaybackManager.getSongPlaybackManagerInstance().isRepeatOn()) {
-            SongPlaybackManager.getSongPlaybackManagerInstance().setRepeatOff();
-        } else {
-            SongPlaybackManager.getSongPlaybackManagerInstance().setRepeatOn();
-        }
-    }
-
     @BindView(R.id.tv_current_position)
     TextView tvCurrentPosition;
+
     @BindView(R.id.song_time_bar)
     SeekBar songTimeBar;
+
     @BindView(R.id.tv_duration)
     TextView tvDuration;
+
     @BindView(R.id.icon_minimize)
     ImageView icMinimize;
 
-    @OnClick(R.id.icon_minimize)
-    public void backToHome() {
-        SongPlaybackManager.getSongPlaybackManagerInstance().saveLastPlayedSong();
-        Intent showCurrentPlayingSongIntent = new Intent(PlayListActivity.this, HomeActivity.class);
-        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(PlayListActivity.this, songBackground, getResources().getString(R.string.shared_song_cover));
-        startActivity(showCurrentPlayingSongIntent, optionsCompat.toBundle());
-    }
+
 
 
     @Nullable
@@ -178,9 +137,76 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
     private SongItemAdapter songItemAdapter;
     private PickSongContract.PickSongPresenter pickSongPresenter;
 
+
+    /**PLAYBACK ACTIONS**/
+
+    //SHUFFLE
+    @OnClick(R.id.ic_shuffle)
+    public void doToggleShuffle() {
+        if (SongPlaybackManager.getSongPlaybackManagerInstance().isShuffleOn()) {
+            SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOff();
+        } else {
+            SongPlaybackManager.getSongPlaybackManagerInstance().setPlayerShuffleOn();
+        }
+    }
+
+
+    //PREVIOUS
+    @OnClick(R.id.ic_previous)
+    public void doPlayPreviousSong() {
+        if (counter != null) {
+            counter.cancel();
+        }
+
+        SongPlaybackManager.getSongPlaybackManagerInstance().previous();
+    }
+
+
+    //PLAY/PAUSE
+    @OnClick(R.id.ic_playback)
+    public void doPlayBack() {
+        sendBroadcast(new Intent(ACTION_PLAYBACK));
+    }
+
+
+    //NEXT
+    @OnClick(R.id.ic_next)
+    public void doPlayNextSong() {
+        if (counter != null) {
+            counter.cancel();
+        }
+
+        SongPlaybackManager.getSongPlaybackManagerInstance().next();
+    }
+
+
+    //REPEAT
+    @OnClick(R.id.ic_repeat)
+    public void doToggleRepeatMode() {
+        if (SongPlaybackManager.getSongPlaybackManagerInstance().isRepeatOn()) {
+            SongPlaybackManager.getSongPlaybackManagerInstance().setRepeatOff();
+        } else {
+            SongPlaybackManager.getSongPlaybackManagerInstance().setRepeatOn();
+        }
+    }
+
+    /**--------------------------------------------------------------------------**/
+
+
+
+    @OnClick(R.id.icon_minimize)
+    public void backToHome() {
+        SongPlaybackManager.getSongPlaybackManagerInstance().saveLastPlayedSong();
+        Intent showCurrentPlayingSongIntent = new Intent(PlayListActivity.this, HomeActivity.class);
+        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(PlayListActivity.this, songBackground, getResources().getString(R.string.shared_song_cover));
+        startActivity(showCurrentPlayingSongIntent, optionsCompat.toBundle());
+    }
+
+
     @OnClick(R.id.bottom_sheet_playlist)
     public void showPlaylist() {
         //scroll to position with offset 0
+        Log.i("LINA", "scrollPosition = " + previousPlaybackSongPosition);
         LinearLayoutManager linearLayoutManager = (LinearLayoutManager) musicRecyclerView.getLayoutManager();
         linearLayoutManager.scrollToPositionWithOffset(previousPlaybackSongPosition, 0);
         if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -191,13 +217,13 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     }
 
+
     @OnClick(R.id.icon_playback_option)
     public void viewQueue() {
         Intent viewQueueIntent = new Intent(PlayListActivity.this, QueuePlayListActivity.class);
         startActivity(viewQueueIntent);
         overridePendingTransition(R.anim.slide_in_from_right_animation, R.anim.slide_out_to_left_animation);
     }
-
 
 
     @Override
@@ -212,8 +238,8 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         pickSongPresenter = new PickSongPresenterImpl(this);
         setupAdapter();
 
-
     }
+
 
     @Override
     protected void onStart() {
@@ -315,6 +341,7 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         SongPlaybackManager.getSongPlaybackManagerInstance().initUI();
     }
 
+
     private List<Item> randomShuffle(List<Item> currentPlayList) {
         List<Item> newList = new ArrayList<>();
         int index;
@@ -356,7 +383,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         super.onDestroy();
     }
 
-
     @Override
     public void onBackPressed() {
         if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
@@ -367,10 +393,11 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
     }
 
-
     private void setupAdapter() {
         songItemAdapter = new SongItemAdapter(this);
-        songItemAdapter.setItemList(SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList());
+        List<Item> itemList = SongPlaybackManager.getSongPlaybackManagerInstance().getOriginalList();
+        itemList.add(0, new ShuffleAllSongsItem());
+        songItemAdapter.setItemList(itemList);
 
         musicRecyclerView.setAdapter(songItemAdapter);
         LinearLayoutManager manager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -379,8 +406,6 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         Drawable musicDividerDecoration = ContextCompat.getDrawable(this, R.drawable.music_divider_decoration);
         musicRecyclerView.addItemDecoration(new DividerItemDecoration(musicDividerDecoration));
     }
-
-
 
     @Override
     public void updatePlayListUI(List<Item> newList, int index) {
@@ -393,7 +418,7 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
             previousItem.setSelected(false);
 
             newList.remove(previousPlaybackSongPosition);
-            newList.add(previousItem);
+            newList.add(previousPlaybackSongPosition, previousItem);
         }
 
         previousPlaybackSongPosition = index + 1;
@@ -401,13 +426,12 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
         SongItem newItem = (SongItem) songItemAdapter.getItemAt(previousPlaybackSongPosition);
         newItem.setSelected(true);
         newList.remove(previousPlaybackSongPosition);
-        newList.add(newItem);
+        newList.add(previousPlaybackSongPosition, newItem);
 
         songItemAdapter.updateListItem(newList);
 
 
     }
-
 
     //TODO: chỗ này gây lag
     private void updatePlayerView(SongItem currentSongItem, int currentPlaybackPosition, int index) {
@@ -424,9 +448,15 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
             }
 
             if (songCover != null) {
-                Glide.with(PlayListActivity.this).load(songCover).apply(new RequestOptions().centerCrop()).into(songBackground);
+                Glide.with(PlayListActivity.this)
+                        .load(songCover)
+                        .apply(new RequestOptions().centerCrop())
+                        .into(songBackground);
             } else {
-                Glide.with(PlayListActivity.this).load(R.drawable.default_song_image).apply(new RequestOptions().centerCrop()).into(songBackground);
+                Glide.with(PlayListActivity.this)
+                        .load(R.drawable.default_song_image)
+                        .apply(new RequestOptions().centerCrop())
+                        .into(songBackground);
             }
 
             int minute = currentPlaybackPosition / 60000;
@@ -463,7 +493,7 @@ public class PlayListActivity extends AppCompatActivity implements PickSongContr
 
             //TODO: lag quá
             List<Item> oldList = songItemAdapter.getCurrentItemList();
-            Log.i("QUEENOFPAIN", "oldList = " + oldList + " - index = " + index);
+            Log.i("LINA", "oldList = " + oldList + " - index = " + index);
             pickSongPresenter.updatePlayList(oldList, index);
 
         } else {

@@ -1,4 +1,4 @@
-package com.example.krot.musicplayer.presenter;
+package com.example.krot.musicplayer.mvp;
 
 import com.example.krot.musicplayer.model.Item;
 

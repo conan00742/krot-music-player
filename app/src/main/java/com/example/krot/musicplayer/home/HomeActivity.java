@@ -40,9 +40,8 @@ import com.example.krot.musicplayer.event_bus.RxBus;
 import com.example.krot.musicplayer.model.Item;
 import com.example.krot.musicplayer.model.SongItem;
 import com.example.krot.musicplayer.playlist.PlayListActivity;
-import com.example.krot.musicplayer.presenter.SongItemContract;
-import com.example.krot.musicplayer.presenter.song.SongItemPresenterImpl;
-import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.example.krot.musicplayer.mvp.SongItemContract;
+import com.example.krot.musicplayer.mvp.song.SongItemPresenterImpl;
 import com.google.gson.Gson;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
@@ -122,10 +121,6 @@ public class HomeActivity extends AppCompatActivity implements SongItemContract.
     @OnClick(R.id.mini_song_container)
     public void showCurrentPlayingSong() {
         manager.saveLastPlayedSong();
-        Log.i("TUSKAR", "isPlaying = " + manager.isPlaying() + "/" + manager.getPlayer().getPlayWhenReady() + " - isShuffle = " + manager.isShuffleOn() + "/" + manager.getPlayer().getShuffleModeEnabled());
-        for (int i = 0; i < manager.getCurrentList().size(); i++) {
-            Log.i("TUSKAR", "songName = " + manager.getCurrentList().get(i).getSong().getSongTitle());
-        }
         Intent showCurrentPlayingSongIntent = new Intent(HomeActivity.this, PlayListActivity.class);
         ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(HomeActivity.this, miniSongCover, getResources().getString(R.string.shared_song_cover));
         startActivity(showCurrentPlayingSongIntent, optionsCompat.toBundle());

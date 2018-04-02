@@ -41,7 +41,6 @@
         <receiver android:name=".receiver.NotificationReceiver">
             <intent-filter>
                 <action android:name="com.example.krot.musicplayer.ACTION_NOTIFICATION_PLAYBACK" />
-                <action android:name="com.example.krot.musicplayer.ACTION_UPDATE_UI" />
                 <action android:name="com.example.krot.musicplayer.ACTION_UPDATE_NOTIFICATION_IS_PLAYING" />
                 <action android:name="com.example.krot.musicplayer.ACTION_UPDATE_NOTIFICATION_IS_PAUSED" />
             </intent-filter>
